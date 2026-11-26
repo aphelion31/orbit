@@ -1,5 +1,6 @@
 mod auth_bridge;
 mod bridge;
+mod theme;
 
 use axum::{
     Json, Router,
@@ -50,6 +51,7 @@ pub fn build_router(state: OrbitState) -> Router {
     let orbit_api = Router::new()
         .nest("/api/v1/orbit/accounts/{account_id}", bridge::routes())
         .nest("/api/v1/orbit/auth", auth_bridge::routes())
+        .nest("/api/v1/orbit", theme::routes())
         .with_state(state.clone());
 
     Router::new()

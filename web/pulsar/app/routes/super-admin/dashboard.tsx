@@ -175,7 +175,7 @@ export default function SuperAdminDashboardRoute() {
               {
                 id: "conversations",
                 label: "Conversations",
-                color: "#2781F6",
+                color: "var(--color-n-brand)",
                 data: paddedSeries.map(([, val]) => val),
               },
             ],

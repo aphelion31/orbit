@@ -2,6 +2,7 @@ import { ArrowLeft, Check, ExternalLink } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useOutletContext } from "react-router";
 import Button from "~/components/next/Button";
+import OrbitThemeCard from "~/components/next/OrbitThemeCard";
 import type { OrbitConfig, OrbitMeta } from "~/components/next/conversation/OrbitBugModal";
 import { api } from "~/lib/api";
 import type { ShellCtx } from "../../shell";
@@ -325,6 +326,10 @@ export default function OrbitIntegrationPage() {
           </div>
         </form>
       )}
+
+      <div className="mt-6">
+        <OrbitThemeCard />
+      </div>
     </div>
   );
 }

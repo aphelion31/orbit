@@ -22,6 +22,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { api, type Profile } from "~/lib/api";
+import { ORBIT_THEME_PRESETS, getOrbitTheme, setOrbitTheme, type OrbitThemeConfig } from "~/lib/orbitTheme";
 import { getTheme, setTheme, type ThemeMode } from "~/lib/theme";
 
 type CommandAction = {
@@ -53,6 +54,7 @@ export function CommandBar({
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const [theme, setThemeState] = useState<ThemeMode>(getTheme);
+  const [orbitTheme, setOrbitThemeState] = useState<OrbitThemeConfig>(getOrbitTheme);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const currentAccount = me.accounts.find((a) => a.id === accountId) ?? me.accounts[0];
@@ -73,14 +75,19 @@ export function CommandBar({
       setPage(detail?.page ?? "root");
       setOpen(true);
     };
-    const onTheme = () => setThemeState(getTheme());
+    const onTheme = () => {
+      setThemeState(getTheme());
+      setOrbitThemeState(getOrbitTheme());
+    };
     window.addEventListener("keydown", onKey);
     window.addEventListener("pulsar:open-command-bar", onCustom);
     window.addEventListener("pulsar:theme-changed", onTheme);
+    window.addEventListener("orbit:theme-changed", onTheme);
     return () => {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("pulsar:open-command-bar", onCustom);
       window.removeEventListener("pulsar:theme-changed", onTheme);
+      window.removeEventListener("orbit:theme-changed", onTheme);
     };
   }, [open]);
 
@@ -89,6 +96,7 @@ export function CommandBar({
       setQuery("");
       setSelected(0);
       setThemeState(getTheme());
+      setOrbitThemeState(getOrbitTheme());
       const t = setTimeout(() => inputRef.current?.focus(), 20);
       return () => clearTimeout(t);
     }
@@ -114,7 +122,7 @@ export function CommandBar({
       return [
         {
           id: "theme-light",
-          section: "Appearance",
+          section: "Appearance Mode",
           title: "Light",
           icon: Sun,
           badge: theme === "light" ? "Active" : undefined,
@@ -122,7 +130,7 @@ export function CommandBar({
         },
         {
           id: "theme-dark",
-          section: "Appearance",
+          section: "Appearance Mode",
           title: "Dark",
           icon: Moon,
           badge: theme === "dark" ? "Active" : undefined,
@@ -130,11 +138,29 @@ export function CommandBar({
         },
         {
           id: "theme-auto",
-          section: "Appearance",
+          section: "Appearance Mode",
           title: "System",
           icon: Monitor,
           badge: theme === "auto" ? "Active" : undefined,
           run: () => { setTheme("auto"); setOpen(false); },
+        },
+        ...ORBIT_THEME_PRESETS.map((preset) => ({
+          id: `theme-color-${preset.id}`,
+          section: "Orbit Theme Color",
+          title: `Theme: ${preset.name}`,
+          icon: Palette,
+          badge: orbitTheme.primary === preset.primary ? "Active" : undefined,
+          run: () => {
+            setOrbitTheme({ preset: preset.id, primary: preset.primary }, { persistServer: true });
+            setOpen(false);
+          },
+        })),
+        {
+          id: "theme-studio",
+          section: "Orbit Theme Color",
+          title: "Open Custom Theme Studio",
+          icon: Settings,
+          run: go(`${p}/settings/integrations/orbit`),
         },
       ];
     }
@@ -189,7 +215,7 @@ export function CommandBar({
       },
     ];
     return base;
-  }, [accountId, currentAvail, me.type, navigate, onOpenShortcuts, page, query, theme]);
+  }, [accountId, currentAvail, me.type, navigate, onOpenShortcuts, orbitTheme.primary, page, query, theme]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

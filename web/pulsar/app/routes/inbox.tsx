@@ -239,7 +239,7 @@ export default function InboxRoute() {
               <button
                 type="button"
                 onClick={() => void bulkResolve()}
-                className="rounded-md bg-n-brand px-2.5 py-1 font-medium text-white hover:bg-n-blue-10"
+                className="rounded-md bg-n-brand px-2.5 py-1 font-medium text-accent-ink hover:bg-n-blue-10"
               >
                 Resolve
               </button>
@@ -376,7 +376,7 @@ export default function InboxRoute() {
                           >
                             <span
                               className="size-1.5 rounded-full"
-                              style={{ backgroundColor: labelColors[l] || "#2781F6" }}
+                              style={{ backgroundColor: labelColors[l] || "var(--color-n-brand)" }}
                             />
                             {l}
                           </span>
@@ -643,7 +643,7 @@ export function Thread({
                 onClick={() => void setConvStatus(conv.status === "open" ? "resolved" : "open")}
                 className={`inline-flex h-8 items-center gap-1.5 rounded-l-lg px-3 text-xs font-medium transition ${
                   conv.status === "open"
-                    ? "bg-n-brand text-white hover:bg-n-blue-10"
+                    ? "bg-n-brand text-accent-ink hover:bg-n-blue-10"
                     : "border border-r-0 border-n-weak bg-n-background text-n-slate-12 hover:bg-n-alpha-2"
                 }`}
               >
@@ -663,7 +663,7 @@ export function Thread({
                 }}
                 className={`grid h-8 w-7 place-items-center rounded-r-lg border-l transition ${
                   conv.status === "open"
-                    ? "border-white/20 bg-n-brand text-white hover:bg-n-blue-10"
+                    ? "border-white/20 bg-n-brand text-accent-ink hover:bg-n-blue-10"
                     : "border border-n-weak bg-n-background text-n-slate-11 hover:bg-n-alpha-2"
                 }`}
               >
@@ -800,7 +800,7 @@ export function Thread({
                 </button>
                 <button
                   type="submit"
-                  className="h-8 rounded-lg bg-n-brand px-3 text-xs font-medium text-white hover:bg-n-blue-10"
+                  className="h-8 rounded-lg bg-n-brand px-3 text-xs font-medium text-accent-ink hover:bg-n-blue-10"
                 >
                   Send Transcript
                 </button>
@@ -990,7 +990,7 @@ function Bubble({
   const tone = m.private
     ? "bg-n-solid-amber border border-n-amber-6/50 text-n-slate-12"
     : out
-      ? "bg-n-brand text-white"
+      ? "bg-n-brand text-accent-ink"
       : "bg-n-solid-2 border border-n-weak text-n-slate-12";
 
   return (

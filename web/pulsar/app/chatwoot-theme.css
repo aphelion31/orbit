@@ -403,7 +403,7 @@
   --color-n-violet-11: rgb(var(--violet-11));
   --color-n-violet-12: rgb(var(--violet-12));
   --color-n-black: #000000;
-  --color-n-brand: #2781F6;
+  --color-n-brand: rgb(var(--blue-9));
   --color-n-portal: var(--dynamic-portal-color);
   --color-n-portal-soft: var(--dynamic-portal-color-soft);
   --color-n-portal-faint: var(--dynamic-portal-color-faint);
