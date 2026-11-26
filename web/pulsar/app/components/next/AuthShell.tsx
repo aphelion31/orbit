@@ -1,5 +1,6 @@
 // Shared centered card + Pulsar brand header.
 import type { ReactNode } from "react";
+import { Logo } from "~/components/next/sidebar/SidebarAccountSwitcher";
 
 export function AuthShell({
   title,
@@ -16,11 +17,7 @@ export function AuthShell({
     <main className="flex min-h-dvh w-full flex-col justify-center bg-n-brand/5 px-4 py-12 dark:bg-n-background sm:px-6 lg:px-8">
       <section className="mx-auto w-full max-w-lg text-center">
         <div className="mx-auto inline-flex items-center justify-center gap-2.5">
-          <img
-            src="/app/brand-assets/logo_thumbnail.svg"
-            alt="Pulsar"
-            className="size-8 shrink-0"
-          />
+          <Logo className="size-8 shrink-0" />
           <span className="font-inter-display text-2xl font-bold tracking-tight text-n-slate-12">
             Orbit
           </span>

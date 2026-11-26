@@ -301,6 +301,43 @@ print('✔ Saturn attachment list contains carried-over asset')"
 DL_BYTES=$(curl -sf -b "$SSO_JAR" "$BASE/api/assets/v2/workspaces/$WS_SLUG/$ASSET3_ID/" | python3 -c 'import sys; b=sys.stdin.buffer.read(); assert b.startswith(b"\x89PNG"), b[:16]; print(len(b))')
 echo "✔ Carried-over PNG downloaded from Saturn ($DL_BYTES bytes)"
 
+# Unified Orbit Theme API (default Orbit Blue #2781F6, Pulsar update, Saturn cookie update, auth guard)
+DEF_THEME=$(curl -sf "$BASE/api/v1/orbit/theme")
+python3 -c '
+import sys, json
+t = json.loads(sys.argv[1])
+assert t["primary"] == "#2781F6" and t["preset"] == "orbit-blue", t
+print("✔ Default Orbit theme is Orbit Blue (#2781F6):", t)' "$DEF_THEME"
+
+THEME_JS=$(curl -sf "$BASE/api/v1/orbit/theme.js")
+grep -q "orbit-theme-override" <<<"$THEME_JS" || fail "GET /api/v1/orbit/theme.js missing override engine"
+grep -q "Pulsar CS Desk" <<<"$THEME_JS" || fail "GET /api/v1/orbit/theme.js missing Pulsar CS Desk switcher"
+echo "✔ GET /api/v1/orbit/theme.js OK"
+
+UNAUTH_THEME_CODE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT -H 'content-type: application/json' \
+  -d '{"preset":"cosmic-violet","mode":"light","primary":"#7C3AED","surface":"","radius":"md"}' \
+  "$BASE/api/v1/orbit/theme")
+[[ "$UNAUTH_THEME_CODE" == "401" ]] || fail "Expected 401 for unauthenticated PUT /api/v1/orbit/theme, got $UNAUTH_THEME_CODE"
+echo "✔ Unauthenticated PUT /api/v1/orbit/theme rejected with 401"
+
+SAVED_THEME=$(curl -sf "${AUTH[@]}" -X PUT -d '{"preset":"cosmic-violet","mode":"light","primary":"#7C3AED","surface":"#EEF2FF","radius":"lg"}' "$BASE/api/v1/orbit/theme")
+GET_THEME_AFTER=$(curl -sf "$BASE/api/v1/orbit/theme")
+python3 -c '
+import sys, json
+s, g = json.loads(sys.argv[1]), json.loads(sys.argv[2])
+for d in (s, g):
+    assert d == {"preset": "cosmic-violet", "mode": "light", "primary": "#7C3AED", "surface": "#EEF2FF", "radius": "lg"}, d
+print("✔ Pulsar PUT /api/v1/orbit/theme persisted and synced")' "$SAVED_THEME" "$GET_THEME_AFTER"
+
+RESET_THEME=$(curl -sf -b "$JAR" -X PUT -H 'content-type: application/json' \
+  -d '{"preset":"orbit-blue","mode":"auto","primary":"#2781F6","surface":"","radius":"md"}' \
+  "$BASE/api/v1/orbit/theme")
+python3 -c '
+import sys, json
+r = json.loads(sys.argv[1])
+assert r == {"preset": "orbit-blue", "mode": "auto", "primary": "#2781F6", "surface": "", "radius": "md"}, r
+print("✔ Saturn cookie PUT /api/v1/orbit/theme reset to Orbit Blue (#2781F6)")' "$RESET_THEME"
+
 # Unified sign out destroys Saturn cookie session
 curl -sf -b "$SSO_JAR" -c "$SSO_JAR" -X POST "$BASE/api/v1/orbit/auth/sign_out" >/dev/null
 OUT_CODE=$(curl -s -b "$SSO_JAR" -o /dev/null -w '%{http_code}' "$BASE/api/users/me/")

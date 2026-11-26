@@ -17,6 +17,7 @@ import { Link, useNavigate } from "react-router";
 import Avatar from "~/components/next/Avatar";
 import { api, signOut, type Profile } from "~/lib/api";
 import { getLocale, setLocale, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { getOrbitTheme, ORBIT_THEME_PRESETS, setOrbitTheme, type OrbitThemeConfig } from "~/lib/orbitTheme";
 import { getTheme, setTheme, type ThemeMode } from "~/lib/theme";
 import { openCommandBar } from "~/components/next/CommandBar";
 
@@ -44,6 +45,7 @@ export default function SidebarProfileMenu({
     () => (me.accounts.find((a) => a.id === accountId) ?? me.accounts[0])?.availability || "online"
   );
   const [theme, setThemeState] = useState<ThemeMode>(getTheme);
+  const [orbitTheme, setOrbitThemeState] = useState<OrbitThemeConfig>(getOrbitTheme);
   const [locale, setLocaleState] = useState<string>(getLocale);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -53,14 +55,19 @@ export default function SidebarProfileMenu({
       const next = (e as CustomEvent<string>).detail;
       if (next) setAvailability(next);
     };
-    const syncTheme = () => setThemeState(getTheme());
+    const syncTheme = () => {
+      setThemeState(getTheme());
+      setOrbitThemeState(getOrbitTheme());
+    };
     const syncLocale = () => setLocaleState(getLocale());
     window.addEventListener("pulsar:availability-changed", syncAvail);
     window.addEventListener("pulsar:theme-changed", syncTheme);
+    window.addEventListener("orbit:theme-changed", syncTheme);
     window.addEventListener("pulsar:locale-changed", syncLocale);
     return () => {
       window.removeEventListener("pulsar:availability-changed", syncAvail);
       window.removeEventListener("pulsar:theme-changed", syncTheme);
+      window.removeEventListener("orbit:theme-changed", syncTheme);
       window.removeEventListener("pulsar:locale-changed", syncLocale);
     };
   }, []);
@@ -197,6 +204,38 @@ export default function SidebarProfileMenu({
                   </button>
                 );
               })}
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-1.5">
+              <div className="flex items-center gap-1.5">
+                {ORBIT_THEME_PRESETS.map((p) => {
+                  const active = orbitTheme.primary === p.primary;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      title={p.name}
+                      onClick={() => {
+                        const next = setOrbitTheme(
+                          { preset: p.id, primary: p.primary },
+                          { persistServer: true }
+                        );
+                        setOrbitThemeState(next);
+                      }}
+                      className={`size-4 rounded-full transition-transform hover:scale-110 ${
+                        active ? "ring-2 ring-n-brand ring-offset-1 ring-offset-n-solid-1" : "border border-black/15"
+                      }`}
+                      style={{ backgroundColor: p.primary }}
+                    />
+                  );
+                })}
+              </div>
+              <Link
+                to={`/accounts/${accountId}/settings/integrations/orbit`}
+                onClick={() => setOpen(false)}
+                className="text-[11px] font-medium text-n-blue-11 hover:underline"
+              >
+                Customize
+              </Link>
             </div>
           </div>
 
