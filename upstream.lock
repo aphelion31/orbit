@@ -8,7 +8,7 @@
   "saturn": {
     "repo": "https://github.com/aphelion31/saturn.git",
     "branch": "develop",
-    "sha": "b0c58c9f8844c91f652607eb10ceddfde612c570",
+    "sha": "cea26061843027876b3a0bdfaf9a2da7350b8b68",
     "tag": "v0.3.1"
   }
 }
