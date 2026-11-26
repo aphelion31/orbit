@@ -1,0 +1,10 @@
+target/
+storage/
+.env
+.DS_Store
+**/.DS_Store
+web/pulsar/node_modules/
+web/pulsar/build/
+web/pulsar/.react-router/
+web/pulsar/.turbo/
+web/pulsar/dist/

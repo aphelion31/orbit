@@ -1,0 +1,1 @@
+import{a as e}from"./rolldown-runtime-BWaJ3C7D.js";import{B as t}from"./utils-DrlcUngY.js";var n=e(t(),1);function r({value:e,defaultValue:t,onValueChange:r}){let i=e!==void 0,[a,o]=n.useState(t);return[i?e:a,n.useCallback(e=>{i||o(e),r?.(e)},[i,r])]}export{r as t};

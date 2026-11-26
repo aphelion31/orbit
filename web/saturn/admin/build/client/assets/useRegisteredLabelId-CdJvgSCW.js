@@ -1,0 +1,1 @@
+import{A as e}from"./Button-DB8F7g4V.js";import{rt as t}from"./store-pQGUcLkR.js";function n(n,r){let i=t(n);return e(()=>(r(i),()=>{r(e=>e===i?void 0:e)}),[i,r]),i}export{n as t};

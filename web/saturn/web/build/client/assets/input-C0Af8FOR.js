@@ -1,0 +1,1 @@
+import{i as e,t}from"./Input-C4tmTWm6.js";import{t as n}from"./jsx-runtime-lTuChwRC.js";var r=n();function i({size:n,...i}){return(0,r.jsx)(t,{...i,render:(0,r.jsx)(e,{size:n})})}export{i as t};

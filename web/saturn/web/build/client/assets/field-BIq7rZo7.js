@@ -1,0 +1,1 @@
+import{m as e,t}from"./FieldRoot-Dgtzs3l3.js";import{I as n,T as r}from"./CompositeRootContext-D-JA2IU8.js";import{t as i}from"./jsx-runtime-lTuChwRC.js";function a({size:t,render:i,...a}){return r({defaultTagName:`div`,render:i,props:n({className:e({size:t})},a)})}var o=i();function s({size:e,...n}){return(0,o.jsx)(t,{...n,render:(0,o.jsx)(a,{size:e})})}export{a as n,s as t};

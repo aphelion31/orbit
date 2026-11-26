@@ -1,0 +1,1 @@
+import{t as e}from"./lib-hnzD48NM.js";import{r as t}from"./tabs-list-ja0b9KxX.js";import{t as n}from"./jsx-runtime-lTuChwRC.js";var r=n();function i({to:n,linkProps:i,...a}){return a.disabled?(0,r.jsx)(t,{...a}):(0,r.jsx)(t,{...a,nativeButton:!1,render:(0,r.jsx)(e,{to:n,...i})})}export{i as t};

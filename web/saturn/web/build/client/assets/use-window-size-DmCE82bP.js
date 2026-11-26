@@ -1,0 +1,1 @@
+import{a as e}from"./rolldown-runtime-BWaJ3C7D.js";import{B as t}from"./utils-DrlcUngY.js";var n=e(t()),r=()=>{let[e,t]=(0,n.useState)([window.innerWidth,window.innerHeight]);return(0,n.useEffect)(()=>{let e=()=>{t([window.innerWidth,window.innerHeight])};return window.addEventListener(`resize`,e),()=>{window.removeEventListener(`resize`,e)}},[]),e};export{r as t};

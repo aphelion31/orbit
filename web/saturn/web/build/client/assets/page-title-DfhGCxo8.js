@@ -1,0 +1,1 @@
+import{a as e}from"./rolldown-runtime-BWaJ3C7D.js";import{B as t}from"./utils-DrlcUngY.js";var n=e(t());function r(e){let{title:t}=e;return(0,n.useEffect)(()=>{t&&(document.title=t??`Saturn | Simple, extensible, open-source project management tool.`)},[t]),null}export{r as t};

@@ -1,0 +1,1 @@
+import{a as e}from"./rolldown-runtime-BWaJ3C7D.js";import{B as t}from"./utils-DrlcUngY.js";var n=e(t()),r=()=>{let[e,t]=(0,n.useState)(new Date);return(0,n.useEffect)(()=>{let e=setInterval(()=>{t(new Date)},6e4);return()=>clearInterval(e)},[]),{currentTime:e}};export{r as t};

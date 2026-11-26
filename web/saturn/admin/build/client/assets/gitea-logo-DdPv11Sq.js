@@ -1,0 +1,1 @@
+var e=`/god-mode/assets/gitea-logo-BAYfzmEl.svg`;export{e as t};

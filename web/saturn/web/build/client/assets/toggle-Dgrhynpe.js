@@ -1,0 +1,1 @@
+import{n as e,t}from"./toggle-BH7_ojdf.js";import{t as n}from"./jsx-runtime-lTuChwRC.js";import{t as r}from"./Toggle-7qplOIZA.js";var i=n();function a({size:n,startIcon:a,endIcon:o,label:s,...c}){return(0,i.jsxs)(r,{...c,render:(0,i.jsx)(t,{size:n}),children:[a,(0,i.jsx)(e,{children:s}),o]})}export{a as t};

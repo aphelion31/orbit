@@ -1,0 +1,1 @@
+import{h as e}from"./dist-D2AfMjLY.js";import{t}from"./jsx-runtime-lTuChwRC.js";var n=t();function r({children:t,gradient:r=!1,className:i}){return(0,n.jsx)(`div`,{className:e(`h-screen w-full overflow-hidden ${r?``:`bg-surface-1`}`,i),children:t})}export{r as t};
