@@ -34,9 +34,11 @@
 5. **1x Unified SSO & 1-Click Switcher**
    - Signing into Pulsar automatically syncs a Saturn `session-id` cookie (`/api/v1/orbit/auth/sync_saturn`); signing into Saturn exchanges into Pulsar devise headers (`/api/v1/orbit/auth/exchange_saturn`); unified sign-out clears both.
    - Jump between **Saturn Backlog ↗** (`/`) and **Pulsar CS Desk ↗** (`/app/`) seamlessly on the same origin.
-6. **Argon2id Password Hashing Across Both Apps**
-   - All newly created, seeded, invited, or reset passwords in both Pulsar and Saturn use **Argon2id** (`$argon2id$v=19$m=19456,t=2,p=1$...`, 16-byte OS CSPRNG salt).
-   - Existing Chatwoot (`bcrypt`) and Plane/Django (`pbkdf2_sha256`) hashes still verify cleanly and upgrade automatically to Argon2id on next login.
+6. **Argon2id Password & Session Security (`Pulsar v1.3.0` + `Saturn v0.3.1`)**
+   - Passwords across both Pulsar and Saturn use **Argon2id** (`m=19456,t=2,p=1`): Pulsar hashes login passwords + devise session tokens (`$argon2id$...`), while Saturn uses Django-compatible `argon2$argon2id$v=19$...` with constant-time dummy verification (`verify_dummy_async`) on unknown/inactive accounts.
+   - Legacy Chatwoot (`bcrypt`) and Plane/Django (`pbkdf2_sha256`) hashes still verify cleanly and upgrade automatically on login.
+7. **Automatic 3-Way Upstream Sync (`upstream.lock` + `scripts/sync-upstream.sh`)**
+   - Sync new features/fixes from **Pulsar** and **Saturn** anytime locally (`./scripts/sync-upstream.sh`) or automatically on GitHub Actions (`.github/workflows/sync-upstream.yml`, every 6 hours or on `repository_dispatch`) using `git merge-file` 3-way merging + Orbit feature safety guards, so right-click bug-to-backlog and 1x SSO stay intact.
 
 ---
 
@@ -89,7 +91,21 @@ docker compose up --build -d
 
 - **Pulsar CS Desk:** `http://localhost:3000/app/`
 - **Saturn Project & Backlog:** `http://localhost:3000/` (`http://localhost:3000/god-mode/` admin, `/spaces/` boards)
-- Compose stack runs **`nginx` (`:3000 -> :80`) -> `axum` (`:3000`, `docker/axum/Dockerfile`) -> `postgres` (`pgvector/pgvector:pg17` with `docker/postgres/init-dbs.sql`)**.
+- Compose stack runs **`nginx` (`:3000 -> :80`) -> `axum` (`:3000`, `docker/axum/Dockerfile`) -> `postgres` (`pgvector/pgvector:pg17` with `docker/postgres/init-dbs.sql`)**, hardened with `read_only: true`, `cap_drop: [ALL]`, and `tmpfs` mounts.
+- For local `cargo run` development, use `docker compose -f docker-compose.dev.yaml up -d` for Postgres only.
+
+### Option C: Syncing New Features from Pulsar & Saturn
+
+```bash
+# Preview changes in sibling ../pulsar and ../saturn checkouts
+./scripts/sync-upstream.sh --check
+
+# Apply 3-way merge, preserve Orbit overlays, verify build + tests + smoke.sh
+./scripts/sync-upstream.sh
+
+# Or fetch remote GitHub repos (used by .github/workflows/sync-upstream.yml every 6h)
+./scripts/sync-upstream.sh --remote
+```
 
 ### Option B: Local Development
 
