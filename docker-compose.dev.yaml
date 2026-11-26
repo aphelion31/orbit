@@ -1,0 +1,24 @@
+# Local dual-PostgreSQL dependency (with pgvector) for `cargo run` development.
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: orbit-postgres-dev
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-orbit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orbit}
+      POSTGRES_DB: orbit_pulsar
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - orbit-postgres-dev-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-dbs.sql:/docker-entrypoint-initdb.d/init-dbs.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-orbit} -d orbit_pulsar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  orbit-postgres-dev-data:
+    name: orbit-postgres-dev-data

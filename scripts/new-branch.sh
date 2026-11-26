@@ -12,7 +12,7 @@ git fetch --prune origin
 if [[ "$arg" == OBT-* ]]; then
   name=$arg
 else
-  last=$(git branch -a | grep -oE 'OBT-[0-9]+' | sed 's/OBT-//' | sort -n | tail -1)
+  last=$({ git branch -a; git log -n 200 --format=%s origin/develop 2>/dev/null || true; } | grep -oE 'OBT-[0-9]+' | sed 's/OBT-//' | sort -n | tail -1 || true)
   next=$(printf '%03d' $(( 10#${last:-0} + 1 )))
   name="OBT-$next/$arg"
 fi
