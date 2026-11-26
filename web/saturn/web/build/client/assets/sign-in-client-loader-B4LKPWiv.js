@@ -1,0 +1,1 @@
+import{E as e}from"./utils-DrlcUngY.js";var t=({request:t})=>{throw e(`/${new URL(t.url).search}`)};export{t as clientLoader};

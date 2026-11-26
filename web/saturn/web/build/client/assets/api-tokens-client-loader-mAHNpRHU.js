@@ -1,0 +1,1 @@
+import{E as e}from"./utils-DrlcUngY.js";var t=()=>{throw e(`/settings/profile/api-tokens/`)};export{t as clientLoader};

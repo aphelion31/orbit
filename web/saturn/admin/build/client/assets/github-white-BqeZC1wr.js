@@ -1,0 +1,1 @@
+var e=`/god-mode/assets/github-black-DmZ70PA_.png`,t=`/god-mode/assets/github-white-BwRnG8jn.png`;export{e as n,t};

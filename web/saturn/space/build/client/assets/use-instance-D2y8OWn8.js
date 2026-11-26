@@ -1,0 +1,1 @@
+import{B as e,G as t}from"./utils-C7cYg3VZ.js";import{ar as n}from"./icon-button-B2xAnVey.js";var r=t(e()),i=()=>{let e=(0,r.useContext)(n);if(e===void 0)throw Error(`useUserProfile must be used within StoreProvider`);return e.instance};export{i as t};

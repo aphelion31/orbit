@@ -1,0 +1,1 @@
+import{K as e,Y as t}from"./jsx-runtime-CiGZeHKU.js";var n=t(e(),1);function r({render:e,payload:t}){return e({payload:t})}var i=n.memo(r);export{i as t};

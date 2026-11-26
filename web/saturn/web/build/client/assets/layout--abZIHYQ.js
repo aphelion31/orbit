@@ -1,0 +1,1 @@
+import{a as e,t}from"./components-2zpdLuUc.js";import{t as n}from"./jsx-runtime-lTuChwRC.js";var r=n(),i=()=>[{name:`robots`,content:`index, nofollow`},{name:`viewport`,content:`width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover`}],a=e(function(){return(0,r.jsx)(t,{})});export{a as default,i as meta};

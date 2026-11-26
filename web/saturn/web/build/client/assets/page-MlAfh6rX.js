@@ -1,0 +1,1 @@
+import{a as e}from"./components-2zpdLuUc.js";import{t}from"./page-E-KtHkbK.js";import{t as n}from"./jsx-runtime-lTuChwRC.js";var r=n();function i(){return(0,r.jsx)(t,{})}var a=e(i);export{a as default};

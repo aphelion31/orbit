@@ -1,0 +1,1 @@
+import{t as e}from"./scrollport-x-clip-CouyJWFF.js";import{a as t}from"./popover-trigger-D8S13-xB.js";import{t as n}from"./jsx-runtime-lTuChwRC.js";import{I as r,T as i}from"./CompositeRootContext-D-JA2IU8.js";var a=n();function o({render:n,children:o,...s}){return i({defaultTagName:`div`,render:n,props:r({className:t()},s,{children:(0,a.jsx)(e,{children:o})})})}export{o as t};

@@ -1,0 +1,1 @@
+import{u as e}from"./icons-DvosQk7Y.js";import{t}from"./jsx-runtime-lTuChwRC.js";var n=t();function r(){return(0,n.jsx)(`div`,{className:`flex items-center justify-center`,children:(0,n.jsx)(e,{"aria-label":`Saturn`,className:`h-9 w-auto animate-pulse text-accent-primary`})})}export{r as t};

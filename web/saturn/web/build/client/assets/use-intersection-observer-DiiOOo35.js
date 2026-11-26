@@ -1,0 +1,1 @@
+import{a as e}from"./rolldown-runtime-BWaJ3C7D.js";import{B as t}from"./utils-DrlcUngY.js";var n=e(t()),r=(e,t,r,i)=>{(0,n.useEffect)(()=>{if(t){let n=new IntersectionObserver(e=>{e[e.length-1].isIntersecting&&r&&r()},{root:e?.current,rootMargin:i});return n.observe(t),()=>{t&&n.unobserve(t)}}},[i,r,t,e.current])};export{r as t};

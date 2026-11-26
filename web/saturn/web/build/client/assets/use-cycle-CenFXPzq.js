@@ -1,0 +1,1 @@
+import{a as e}from"./rolldown-runtime-BWaJ3C7D.js";import{B as t}from"./utils-DrlcUngY.js";import{t as n}from"./store-context-n0UJoYOp.js";var r=e(t()),i=()=>{let e=(0,r.useContext)(n);if(e===void 0)throw Error(`useCycle must be used within StoreProvider`);return e.cycle};export{i as t};

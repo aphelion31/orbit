@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-lTuChwRC.js";import{B as t}from"./CompositeRootContext-D-JA2IU8.js";var n=e(),r=`min-w-0 w-full -mx-0.5 overflow-x-clip px-0.5`;function i({children:e,className:i}){return(0,n.jsx)(`div`,{className:t(r,i),children:e})}export{i as t};
