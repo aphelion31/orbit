@@ -39,6 +39,10 @@
    - Legacy Chatwoot (`bcrypt`) and Plane/Django (`pbkdf2_sha256`) hashes still verify cleanly and upgrade automatically on login.
 7. **Automatic 3-Way Upstream Sync (`upstream.lock` + `scripts/sync-upstream.sh`)**
    - Sync new features/fixes from **Pulsar** and **Saturn** anytime locally (`./scripts/sync-upstream.sh`) or automatically on GitHub Actions (`.github/workflows/sync-upstream.yml`, every 6 hours or on `repository_dispatch`) using `git merge-file` 3-way merging + Orbit feature safety guards, so right-click bug-to-backlog and 1x SSO stay intact.
+8. **Unified Orbit Blue Default & Cross-App Custom Theme Engine**
+   - Default **Orbit Blue (`#2781F6`)** brand palette unified across both **Pulsar CS Desk (`/app/*`)** and **Saturn Backlog (`/`, `/god-mode/`, `/spaces/`)**.
+   - Supports 8 curated presets, custom `#RRGGBB` accent color picker, optional surface tint, Light/Dark/System mode, corner radius (`Sharp` / `Default` / `Rounded`), zero-FOUC boot, and WCAG contrast-aware foreground ink (`--orbit-brand-ink`) — updating buttons, chat bubbles, badges, focus rings, logos, charts, links, and Saturn's floating dock dynamically.
+   - Workspace themes persist via `GET/PUT /api/v1/orbit/theme` (accepting Pulsar headers or Saturn session cookie), sync live across tabs, and can be customized from **Orbit Settings**, **Sidebar Profile Menu**, **`⌘K` Appearance**, or Saturn's floating **Theme** dock.
 
 ---
 
@@ -56,9 +60,9 @@ All screenshots below were captured against a live running **Orbit** server conn
 | --- | --- |
 | ![CS Inbox Right-Click Menu](docs/screenshots/cs-inbox-context-menu.png) | ![Push Bug to Orbit Backlog Modal](docs/screenshots/cs-inbox-bug-modal.png) |
 
-### Configurable Default Destination & 1x SSO Into Saturn Backlog
+### Configurable Default Destination, Custom Theme Studio & 1x SSO Into Saturn Backlog
 
-| Orbit Destination Settings (Pulsar) | Saturn Backlog via 1x SSO (Linked Issue + Attachment) |
+| Orbit Destination Settings & Custom Theme Studio (Pulsar) | Saturn Backlog via 1x SSO (Floating Theme Dock & Switcher) |
 | --- | --- |
 | ![Orbit Integration Settings](docs/screenshots/orbit-settings.png) | ![Saturn Backlog SSO View](docs/screenshots/saturn-backlog-sso.png) |
 
