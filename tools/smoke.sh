@@ -67,7 +67,7 @@ echo "==> Seeding Orbit ($EMAIL / $ORG)"
 P_HASH="$(psql "$P_URL" -Atc "SELECT encrypted_password FROM users WHERE lower(email) = '$EMAIL' LIMIT 1")"
 S_HASH="$(psql "$S_URL" -Atc "SELECT password FROM users WHERE lower(email) = '$EMAIL' LIMIT 1")"
 [[ "$P_HASH" == \$argon2id\$* ]] || fail "Pulsar seeded password not Argon2id: $P_HASH"
-[[ "$S_HASH" == \$argon2id\$* ]] || fail "Saturn seeded password not Argon2id: $S_HASH"
+[[ "$S_HASH" == argon2\$argon2id\$* || "$S_HASH" == \$argon2id\$* ]] || fail "Saturn seeded password not Argon2id: $S_HASH"
 echo "✔ Both Pulsar & Saturn seeded passwords use Argon2id"
 
 echo "==> Starting orbit on $BASE"

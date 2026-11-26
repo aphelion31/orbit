@@ -1,0 +1,96 @@
+name: Sync Upstream (Pulsar & Saturn)
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [upstream-updated]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PG_BASE: postgres://postgres:postgres@127.0.0.1:5432
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Sync Pulsar & Saturn via 3-way merge
+        id: sync
+        run: |
+          chmod +x scripts/sync-upstream.sh
+          ./scripts/sync-upstream.sh --remote --no-verify
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.sync.outputs.changed == 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - if: steps.sync.outputs.changed == 'true'
+        uses: Swatinem/rust-cache@v2
+
+      - if: steps.sync.outputs.changed == 'true'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+
+      - if: steps.sync.outputs.changed == 'true'
+        name: Verify build, unit tests, and smoke test
+        run: |
+          if ! command -v createdb >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y postgresql-client
+          fi
+          scripts/build-web.sh
+          cargo build --workspace
+          cargo test --workspace
+          ./tools/smoke.sh
+
+      - if: steps.sync.outputs.changed == 'true'
+        name: Open OBT-NNN PR into develop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config core.hooksPath .githooks
+          BRANCH=$(gh pr list --base develop --state open --json headRefName --jq '[.[].headRefName | select(test("OBT-[0-9]+/chore-sync-upstream"))] | first // ""')
+          if [[ -z "$BRANCH" ]]; then
+            LAST_PR=$(gh pr list --state all --limit 200 --json headRefName --jq '[.[].headRefName | capture("OBT-(?<n>[0-9]+)") | .n | tonumber] | max // 0')
+            LAST_GIT=$({ git branch -a; git log -n 200 --format=%s; } | grep -oE 'OBT-[0-9]+' | sed 's/OBT-//' | sort -n | tail -1 || true)
+            MAX_NUM=$(( LAST_PR > ${LAST_GIT:-0} ? LAST_PR : ${LAST_GIT:-0} ))
+            BRANCH="OBT-$(printf '%03d' $((MAX_NUM + 1)))/chore-sync-upstream"
+            git switch -c "$BRANCH"
+          else
+            git fetch origin "$BRANCH" || true
+            git switch -c "$BRANCH"
+          fi
+          git add -A
+          git commit -m "chore(sync): update pulsar and saturn from upstream"
+          git push --force-with-lease -u origin "$BRANCH"
+          if ! gh pr view "$BRANCH" >/dev/null 2>&1; then
+            gh pr create --base develop --head "$BRANCH" \
+              --title "chore(sync): update pulsar and saturn from upstream" \
+              --body "Automated 3-way upstream sync from \`aphelion31/pulsar\` and \`aphelion31/saturn\`. Verified with \`scripts/build-web.sh\`, \`cargo test --workspace\`, and \`./tools/smoke.sh\` (right-click bug-to-backlog, attachment carry-over, SSO, Argon2id)."
+          fi

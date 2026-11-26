@@ -13,3 +13,6 @@ codegen-units = 1
 
 [profile.dev.package.argon2]
 opt-level = 3
+
+[profile.dev.package.blake2]
+opt-level = 3

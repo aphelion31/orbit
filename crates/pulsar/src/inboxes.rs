@@ -71,7 +71,7 @@ fn token() -> String {
 }
 
 async fn hash_pw(pw: String) -> Result<String, ApiError> {
-    crate::auth::hash_password(pw).await
+    crate::auth::hash_password_async(pw).await
 }
 
 /// Accept `{key: {...}}` (Rails nested params) or a flat body.

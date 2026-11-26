@@ -11,8 +11,8 @@ pub async fn run(db: &PgPool, args: &[String]) -> anyhow::Result<()> {
         .ok_or_else(|| anyhow::anyhow!("password required"))?;
     anyhow::ensure!(password.len() >= 6, "password must be >= 6 chars");
     let account_name = args.get(2).cloned().unwrap_or_else(|| "Acme".into());
-    let hash = crate::auth::hash_password_sync(password)
-        .map_err(|e| anyhow::anyhow!(e.1))?;
+    let hash = crate::auth::hash_password(password)
+        .map_err(|_| anyhow::anyhow!("password hash failed"))?;
     let (ff, ff1) = crate::auth::default_feature_flags();
     let mut tx = db.begin().await?;
     let uid: i64 = sqlx::query_scalar(

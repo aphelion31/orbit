@@ -15,10 +15,10 @@ Both constituent products remain visible in UI and attribution (`Orbit = Pulsar 
 | `crates/saturn/` | Library crate extracted from Saturn (Plane-compatible workspaces, work items, intake, assets, admin, public spaces, live docs) |
 | `web/pulsar/` | Pulsar React Router SPA mounted at `/app/` (plus Orbit bug modal & settings integrations) |
 | `web/saturn/` | Prebuilt Saturn React Router SPAs (`web` at `/`, `admin` at `/god-mode`, `space` at `/spaces`) with floating CS switcher |
-| `docker/`, `docker-compose.yaml` | Split `docker/{axum,nginx,postgres}` production stack (non-root `circleit` uid 1001, Nginx WebSocket proxy, dual-DB pgvector init) |
-| `tools/` | Verification scripts (`smoke.sh`, `e2e-screenshots.sh`, `capture-screenshots.mjs`) |
-| `scripts/` | Git hook checks (`check-branch.sh`, `check-commit-msg.sh`), `new-branch.sh`, `build-web.sh` |
+| `docker/`, `docker-compose*.yaml` | Split `docker/{axum,nginx,postgres}` production stack (non-root `circleit`, `read_only`, `cap_drop`, Nginx WS proxy) + dev DB compose |
+| `upstream.lock`, `scripts/` | Upstream sync (`sync-upstream.sh` 3-way merge + `upstream.lock`), hooks (`check-branch.sh`, `check-commit-msg.sh`), `build-web.sh` |
 | `docs/` | Architecture docs, Git/PR rules, and Retina E2E screenshots (`docs/screenshots/`) |
+| `tools/` | Verification scripts (`smoke.sh`, `e2e-screenshots.sh`, `capture-screenshots.mjs`) |
 
 Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) before making structural changes, and keep changes inside `orbit/` strictly separate from upstream sibling repos.
 
@@ -29,7 +29,7 @@ Read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) before making structural cha
    - Every Saturn workspace/project route enforces `require_workspace` / `require_project` + `workspace_id` / `project_id` filtering (20 admin, 15 member, 5 guest, `deleted_at IS NULL`).
 2. **Bind every SQL parameter.** Always use `sqlx::query(...).bind(...)`. Never interpolate request input into SQL.
 3. **Argon2id password hashing + legacy compatibility.**
-   - All newly created/reset/seeded passwords in both Pulsar (`auth::hash_password*`) and Saturn (`session::hash_password`) use **Argon2id** (`$argon2id$v=19$m=19456,t=2,p=1$...`).
+   - All newly created/reset/seeded passwords follow **Argon2id** (`m=19456,t=2,p=1`): Pulsar (`$argon2id$...` + session tokens) and Saturn (`argon2$argon2id$...` Django-compatible + constant-time `verify_dummy_async()`).
    - Legacy `bcrypt` (Pulsar/Chatwoot) and Django `pbkdf2_sha256` (Saturn/Plane) hashes must remain verifiable and upgrade transparently to Argon2id on login.
 4. **Preserve UI attribution.** Keep Pulsar (`#2781F6` `P` mark) and Saturn branding visible under the unified Orbit umbrella.
 5. **No internal cross-crate secrets in frontends.** Frontends talk over same-origin HTTP/WebSocket only; cross-DB queries & live Saturn→Pulsar private-note events stay in `crates/orbit`.
