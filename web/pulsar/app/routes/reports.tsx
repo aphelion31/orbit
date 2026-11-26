@@ -327,7 +327,7 @@ function ConversationReport({ accountId }: { accountId: number }) {
                   series: [
                     {
                       label: t(`REPORT.METRICS.${activeMeta[1]}.NAME`),
-                      color: "#2781F6",
+                      color: "var(--color-n-brand)",
                       data: activePoints.map((pt) => pt.value),
                     },
                   ],

@@ -65,7 +65,7 @@ export default function SsoLoginRoute() {
         <button
           type="submit"
           disabled={busy}
-          className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-n-brand px-4 text-sm font-medium text-white transition hover:bg-n-blue-10 disabled:opacity-50"
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-n-brand px-4 text-sm font-medium text-accent-ink transition hover:bg-n-blue-10 disabled:opacity-50"
         >
           <LockKeyhole className="size-4" />
           {busy ? "Redirecting..." : "Continue with SSO"}

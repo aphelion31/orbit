@@ -71,8 +71,8 @@
   --color-ink: rgb(var(--slate-12));
   --color-ink-2: rgb(var(--slate-11));
   --color-ink-3: rgb(var(--slate-10));
-  --color-accent: #2781f6;
-  --color-accent-ink: #ffffff;
+  --color-accent: rgb(var(--blue-9));
+  --color-accent-ink: var(--orbit-brand-ink, #ffffff);
   --color-accent-soft: rgb(var(--blue-3));
   --color-note: rgb(var(--amber-2));
   --color-note-line: rgb(var(--amber-6));
@@ -103,8 +103,20 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid #2781f6;
+  outline: 2px solid rgb(var(--blue-9));
   outline-offset: 2px;
+}
+
+:root[data-orbit-radius="sm"] {
+  --radius-md: 0.25rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+}
+
+:root[data-orbit-radius="lg"] {
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 }
 
 .num {

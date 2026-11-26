@@ -180,10 +180,15 @@ async function seedDemoConversation(pngBuf) {
 const pngBuf = await makeBugScreenshotPng();
 const convId = await seedDemoConversation(pngBuf);
 
-// 1. Login screen
+// 1. Login screen (verify default Orbit Blue #2781F6)
 await page.goto(`${BASE}/app/login`, { waitUntil: "networkidle" });
 await page.waitForSelector('input[name="email"]');
 await page.waitForTimeout(300);
+const loginBtnBg = await page.locator('button[type="submit"]').evaluate((el) => getComputedStyle(el).backgroundColor);
+if (loginBtnBg !== "rgb(39, 129, 246)") {
+  throw new Error(`Expected default Orbit Blue login button rgb(39, 129, 246), got ${loginBtnBg}`);
+}
+console.log("✔ verified default Orbit Blue (#2781F6) on Pulsar login");
 await page.screenshot({ path: path.join(OUT_DIR, "login.png") });
 console.log("✔ captured login.png");
 
@@ -231,22 +236,79 @@ if (!createdIssue.attachments_copied || createdIssue.attachments_copied.length !
 await page.locator(`a[href="${createdIssue.url}"]`).waitFor({ state: "visible", timeout: 10000 });
 console.log(`✔ created ${createdIssue.identifier} via UI modal with carried-over attachment`);
 
-// 4. Orbit Destination Settings page
+// 4. Orbit Destination Settings & Custom Theme Studio
 await page.goto(`${BASE}/app/accounts/1/settings/integrations/orbit`, { waitUntil: "networkidle" });
 await page.locator("h1", { hasText: "Orbit Backlog (Saturn)" }).waitFor({ state: "visible" });
 await page.locator("text=Default Destination").waitFor({ state: "visible", timeout: 10000 });
+await page.locator("#orbit-theme-card").waitFor({ state: "visible", timeout: 10000 });
 await page.waitForTimeout(250);
 await page.screenshot({ path: path.join(OUT_DIR, "orbit-settings.png") });
 console.log("✔ captured orbit-settings.png");
 
-// 5. Switch directly to Saturn Backlog WITHOUT signing in again (1x Login SSO!)
+// Live theme switch check on Pulsar: click Cosmic Violet preset, then custom Crimson Rose #E11D48 and Save
+await page.locator('[data-orbit-theme-preset="cosmic-violet"]').click();
+await page.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue("--blue-9").trim() === "124 58 237");
+await page.waitForFunction(() => {
+  const btn = document.querySelector("#orbit-save-theme-btn");
+  const rect = document.querySelector("aside svg rect");
+  return (
+    btn &&
+    rect &&
+    getComputedStyle(btn).backgroundColor === "rgb(124, 58, 237)" &&
+    getComputedStyle(rect).fill === "rgb(124, 58, 237)"
+  );
+});
+
+await page.fill("#orbit-custom-primary-hex", "#E11D48");
+await page.waitForFunction(() => {
+  const btn = document.querySelector("#orbit-save-theme-btn");
+  return (
+    getComputedStyle(document.documentElement).getPropertyValue("--blue-9").trim() === "225 29 72" &&
+    btn &&
+    getComputedStyle(btn).backgroundColor === "rgb(225, 29, 72)"
+  );
+});
+const themeSavePromise = page.waitForResponse(
+  (res) => res.url().includes("/api/v1/orbit/theme") && res.request().method() === "PUT"
+);
+await page.locator("#orbit-save-theme-btn").click();
+const themeSaveRes = await themeSavePromise;
+if (themeSaveRes.status() !== 200) {
+  throw new Error(`Theme save failed: ${themeSaveRes.status()}`);
+}
+console.log("✔ verified live Pulsar custom theme switch (#7C3AED & #E11D48)");
+
+// 5. Switch directly to Saturn Backlog WITHOUT signing in again (1x Login SSO!) & verify synced custom theme
 await page.goto(`${BASE}${createdIssue.url}`, { waitUntil: "networkidle" });
 await page.locator(`text=${createdIssue.identifier}`).first().waitFor({ state: "visible", timeout: 15000 });
 await page.locator("text=Checkout gagal 500").first().waitFor({ state: "visible", timeout: 15000 });
-await page.locator('a[href="/app/"]', { hasText: "Pulsar CS Desk" }).waitFor({ state: "visible" });
-await page.waitForTimeout(500);
+await page.locator('a[href="/app/"]', { hasText: "Pulsar CS Desk" }).waitFor({ state: "visible", timeout: 15000 });
+await page.waitForSelector("#orbit-theme-override", { state: "attached", timeout: 10000 });
+await page.waitForFunction(() => {
+  const bd = getComputedStyle(document.documentElement).getPropertyValue("--brand-default").trim().toLowerCase();
+  return bd === "#e11d48" || bd === "rgb(225, 29, 72)";
+});
+console.log("✔ verified Saturn Backlog inherited custom theme #E11D48 dynamically");
+
+// Verify Saturn Orbit Theme popover & Reset to Orbit Blue default before final screenshot
+await page.locator("#orbit-theme-btn").click();
+await page.locator("#orbit-theme-popover").waitFor({ state: "visible" });
+const resetThemePromise = page.waitForResponse(
+  (res) => res.url().includes("/api/v1/orbit/theme") && res.request().method() === "PUT"
+);
+await page.locator("#orbit-saturn-reset-btn").click();
+const resetThemeRes = await resetThemePromise;
+if (resetThemeRes.status() !== 200) {
+  throw new Error(`Saturn Reset Blue failed: ${resetThemeRes.status()}`);
+}
+await page.waitForFunction(() => {
+  const bd = getComputedStyle(document.documentElement).getPropertyValue("--brand-default").trim().toLowerCase();
+  return bd === "#2781f6" || bd === "rgb(39, 129, 246)";
+});
+await page.locator("#orbit-theme-btn").click();
+await page.waitForTimeout(300);
 await page.screenshot({ path: path.join(OUT_DIR, "saturn-backlog-sso.png") });
-console.log("✔ captured saturn-backlog-sso.png (authenticated via 1x SSO!)");
+console.log("✔ verified Saturn reset to Orbit Blue (#2781F6) & captured saturn-backlog-sso.png");
 
 await browser.close();
 

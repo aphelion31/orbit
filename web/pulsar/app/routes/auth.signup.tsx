@@ -88,7 +88,7 @@ export default function SignupRoute() {
         <button
           type="submit"
           disabled={busy}
-          className="mt-2 flex h-10 w-full items-center justify-center rounded-lg bg-n-brand px-4 text-sm font-medium text-white transition hover:bg-n-blue-10 disabled:opacity-50"
+          className="mt-2 flex h-10 w-full items-center justify-center rounded-lg bg-n-brand px-4 text-sm font-medium text-accent-ink transition hover:bg-n-blue-10 disabled:opacity-50"
         >
           {busy ? "Creating account..." : "Create account"}
         </button>

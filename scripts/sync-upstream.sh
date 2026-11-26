@@ -38,6 +38,8 @@ PROTECTED_ORBIT_ONLY = {
     "crates/pulsar/src/lib.rs",
     "crates/saturn/src/lib.rs",
     "web/pulsar/app/components/next/conversation/OrbitBugModal.tsx",
+    "web/pulsar/app/components/next/OrbitThemeCard.tsx",
+    "web/pulsar/app/lib/orbitTheme.ts",
     "web/pulsar/app/routes/settings/integrations/orbit.tsx",
 }
 
@@ -96,29 +98,23 @@ def map_saturn(rel: str) -> str | None:
     return None
 
 def reapply_saturn_web_patches() -> None:
-    switcher_js = (
-        ";(function(){function m(){if(!window.__reactRouterDataRouter||!document.body"
-        "||!document.body.querySelector('aside,main,nav,form'))return;"
-        "if(document.title&&!document.title.startsWith('Orbit'))"
-        "document.title='Orbit \\u00b7 '+document.title;"
-        "if(document.getElementById('orbit-cs-switcher'))return;"
-        "var a=document.createElement('a');a.id='orbit-cs-switcher';a.href='/app/';"
-        "a.title='Switch to Pulsar CS Desk (Orbit)';a.textContent='Pulsar CS Desk \\u2197';"
-        "a.style.cssText='position:fixed;right:16px;bottom:16px;z-index:40;display:inline-flex;"
-        "align-items:center;gap:7px;padding:8px 14px;border-radius:9999px;"
-        "background:linear-gradient(135deg,#2781F6,#1d4ed8);color:#ffffff;"
-        "font:600 12px/1 system-ui,-apple-system,sans-serif;text-decoration:none;"
-        "border:1px solid rgba(255,255,255,0.2);box-shadow:0 8px 22px rgba(39,129,246,0.34);';"
-        "document.body.appendChild(a);}function s(){new MutationObserver(m).observe("
-        "document.body,{childList:true,subtree:true});setInterval(m,500);m();}"
-        "if(document.readyState==='complete'){setTimeout(s,250);}else{"
-        "window.addEventListener('load',function(){setTimeout(s,250);});}})();"
+    loader_js = (
+        ";/* Orbit Pulsar CS Desk + Theme Bridge */"
+        "(function(){if(window.__orbitThemeLoaded)return;window.__orbitThemeLoaded=1;"
+        "function l(){if(document.getElementById('orbit-theme-bridge-js'))return;"
+        "var s=document.createElement('script');s.id='orbit-theme-bridge-js';"
+        "s.src='/api/v1/orbit/theme.js';s.defer=true;document.head.appendChild(s);}"
+        "if(document.readyState==='complete'){setTimeout(l,150);}else{"
+        "window.addEventListener('load',function(){setTimeout(l,150);});}})();"
     )
-    for p in sorted(glob.glob(str(ROOT / "web/saturn/web/build/client/assets/entry.client-*.js"))):
-        txt = Path(p).read_text()
-        if "orbit-cs-switcher" not in txt:
-            Path(p).write_text(txt.rstrip() + switcher_js)
-            print(f"✔ re-applied Orbit switcher pill in {Path(p).relative_to(ROOT)}")
+    old_switcher_re = re.compile(r";\(function\(\)\{function m\(\)\{[\s\S]*?orbit-cs-switcher[\s\S]*?\}\)\(\);\s*$")
+    for app in ("web", "admin", "space"):
+        for p in sorted(glob.glob(str(ROOT / f"web/saturn/{app}/build/client/assets/entry.client-*.js"))):
+            txt = Path(p).read_text()
+            txt = old_switcher_re.sub("", txt)
+            if "orbit-theme-bridge-js" not in txt:
+                Path(p).write_text(txt.rstrip() + loader_js)
+                print(f"✔ re-applied Orbit Pulsar CS Desk + Theme bridge in {Path(p).relative_to(ROOT)}")
 
     hydrate_re = re.compile(
         r"([A-Za-z0-9_$]+)=n\(function\(\)\{let\{resolvedTheme:[^}]+\}=[^;]+;"
@@ -138,16 +134,19 @@ def verify_orbit_guards() -> None:
         ("web/pulsar/app/routes/inbox.tsx", "Masukin Backlog (Orbit)"),
         ("web/pulsar/app/components/next/conversation/OrbitBugModal.tsx", "OrbitBugModal"),
         ("web/pulsar/app/components/next/conversation/ConversationSidebar.tsx", "Orbit Backlog"),
+        ("web/pulsar/app/lib/orbitTheme.ts", "applyOrbitTheme"),
         ("crates/orbit/src/main.rs", "/api/v1/orbit"),
+        ("crates/orbit/src/theme.rs", "ORBIT_THEME"),
         ("crates/saturn/src/webhook_out.rs", "pub fn subscribe_internal"),
     ]
     for rel, needle in guards:
         fp = ROOT / rel
         if not fp.exists() or needle not in fp.read_text():
             raise SystemExit(f"✖ Orbit safety guard failed: '{needle}' missing in {rel}")
-    entries = sorted(glob.glob(str(ROOT / "web/saturn/web/build/client/assets/entry.client-*.js")))
-    if not any("Pulsar CS Desk" in Path(p).read_text() for p in entries):
-        raise SystemExit("✖ Orbit safety guard failed: Pulsar CS Desk switcher missing in Saturn entry.client")
+    for app in ("web", "admin", "space"):
+        entries = sorted(glob.glob(str(ROOT / f"web/saturn/{app}/build/client/assets/entry.client-*.js")))
+        if not any("orbit-theme-bridge-js" in Path(p).read_text() and "Pulsar CS Desk" in Path(p).read_text() for p in entries):
+            raise SystemExit(f"✖ Orbit safety guard failed: Orbit bridge missing in Saturn {app} entry.client")
     print("✔ All Orbit feature safety guards intact")
 
 tmpdir = Path(tempfile.mkdtemp(prefix="orbit-sync-"))
