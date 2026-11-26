@@ -1,4 +1,4 @@
-# Multi-stage production build for Orbit (CS Desk + Project & Backlog in one binary)
+# Multi-stage production build for Orbit Axum server (Pulsar CS Desk + Saturn Backlog)
 
 FROM oven/bun:1.4.4-slim AS web-builder
 WORKDIR /app/web/pulsar
@@ -7,27 +7,32 @@ RUN bun install --frozen-lockfile
 COPY web/pulsar .
 RUN bun run typecheck && bun run build
 
-FROM rust:1-bookworm AS rust-builder
+FROM rust:1-bookworm AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake make g++ pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY crates crates
-RUN cargo build --release --bin orbit
+RUN cargo build --release --locked --bin orbit
 
 FROM debian:bookworm-slim AS runtime
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd --system --uid 10001 --create-home orbit
+    && groupadd --gid 1001 circleit \
+    && useradd --uid 1001 --gid circleit --create-home circleit
 
 WORKDIR /srv/orbit
-COPY --from=rust-builder /app/target/release/orbit /usr/local/bin/orbit
+COPY --from=builder /app/target/release/orbit /usr/local/bin/orbit
 COPY --from=web-builder /app/web/pulsar/build/client /srv/orbit/web/pulsar/build/client
 COPY web/saturn /srv/orbit/web/saturn
-RUN mkdir -p /data/storage/pulsar /data/storage/saturn \
-    && chown -R orbit:orbit /srv/orbit /data/storage
+RUN install -d -o circleit -g circleit -m 750 /data/storage/pulsar /data/storage/saturn \
+    && chown -R circleit:circleit /srv/orbit
 
-USER orbit
-ENV BIND=0.0.0.0:3000 \
+USER circleit
+ENV HOME=/home/circleit \
+    BIND=0.0.0.0:3000 \
     PULSAR_WEB_DIR=/srv/orbit/web/pulsar/build/client \
     SATURN_WEB_DIR=/srv/orbit/web/saturn \
     PULSAR_STORAGE_DIR=/data/storage/pulsar \

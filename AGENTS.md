@@ -15,7 +15,7 @@ Both constituent products remain visible in UI and attribution (`Orbit = Pulsar 
 | `crates/saturn/` | Library crate extracted from Saturn (Plane-compatible workspaces, work items, intake, assets, admin, public spaces, live docs) |
 | `web/pulsar/` | Pulsar React Router SPA mounted at `/app/` (plus Orbit bug modal & settings integrations) |
 | `web/saturn/` | Prebuilt Saturn React Router SPAs (`web` at `/`, `admin` at `/god-mode`, `space` at `/spaces`) with floating CS switcher |
-| `docker/`, `Dockerfile`, `docker-compose.yml` | Single-container production packaging + dual-DB Postgres bootstrap |
+| `docker/`, `docker-compose.yaml` | Split `docker/{axum,nginx,postgres}` production stack (non-root `circleit` uid 1001, Nginx WebSocket proxy, dual-DB pgvector init) |
 | `tools/` | Verification scripts (`smoke.sh`, `e2e-screenshots.sh`, `capture-screenshots.mjs`) |
 | `scripts/` | Git hook checks (`check-branch.sh`, `check-commit-msg.sh`), `new-branch.sh`, `build-web.sh` |
 | `docs/` | Architecture docs, Git/PR rules, and Retina E2E screenshots (`docs/screenshots/`) |

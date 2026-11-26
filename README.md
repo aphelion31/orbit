@@ -89,7 +89,7 @@ docker compose up --build -d
 
 - **Pulsar CS Desk:** `http://localhost:3000/app/`
 - **Saturn Project & Backlog:** `http://localhost:3000/` (`http://localhost:3000/god-mode/` admin, `/spaces/` boards)
-- Default Postgres container uses `pgvector/pgvector:pg17` with `docker/init-dbs.sql`.
+- Compose stack runs **`nginx` (`:3000 -> :80`) -> `axum` (`:3000`, `docker/axum/Dockerfile`) -> `postgres` (`pgvector/pgvector:pg17` with `docker/postgres/init-dbs.sql`)**.
 
 ### Option B: Local Development
 

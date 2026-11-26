@@ -8,21 +8,30 @@ services:
       POSTGRES_DB: orbit_pulsar
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./docker/init-dbs.sql:/docker-entrypoint-initdb.d/init-dbs.sql:ro
+      - ./docker/postgres/init-dbs.sql:/docker-entrypoint-initdb.d/init-dbs.sql:ro
+    networks:
+      - orbit-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-orbit} -d orbit_pulsar"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  orbit:
-    build: .
+  axum:
+    build:
+      context: .
+      dockerfile: docker/axum/Dockerfile
+    image: orbit-axum:0.1.0
+    pull_policy: build
     restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "${PORT:-3000}:3000"
+    networks:
+      - orbit-network
     environment:
       PULSAR_DATABASE_URL: postgres://${POSTGRES_USER:-orbit}:${POSTGRES_PASSWORD}@postgres:5432/orbit_pulsar
       SATURN_DATABASE_URL: postgres://${POSTGRES_USER:-orbit}:${POSTGRES_PASSWORD}@postgres:5432/orbit_saturn
@@ -43,7 +52,41 @@ services:
     volumes:
       - orbit_storage:/data/storage
     stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    image: orbit-nginx:0.1.0
+    pull_policy: build
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "${PORT:-3000}:80"
+    depends_on:
+      axum:
+        condition: service_healthy
+    networks:
+      - orbit-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
 
 volumes:
   pgdata:
   orbit_storage:
+
+networks:
+  orbit-network:
+    driver: bridge
