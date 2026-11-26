@@ -1,0 +1,1 @@
+import{t as e}from"./globe-outline-c0kMw3Xc.js";import{t}from"./lock-outline-BqbJcScs.js";import{h as n}from"./dist-D2AfMjLY.js";import{t as r}from"./jsx-runtime-lTuChwRC.js";var i=r();function a(r){let{iconKey:a,className:o}=r,s=(()=>{switch(a){case`Lock`:return t;case`Globe2`:return e;default:return null}})();return s?(0,i.jsx)(s,{className:n(`h-3 w-3`,o)}):null}export{a as t};

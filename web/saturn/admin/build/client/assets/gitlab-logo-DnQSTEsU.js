@@ -1,0 +1,1 @@
+var e=`/god-mode/assets/gitlab-logo-BL2xQyij.svg`;export{e as t};

@@ -1,0 +1,1 @@
+import{a as e,t}from"./components-2zpdLuUc.js";import{t as n}from"./jsx-runtime-lTuChwRC.js";var r=n(),i=e(function(){return(0,r.jsx)(t,{})}),a=()=>[{title:`Set Password - Saturn`}];export{i as default,a as meta};

@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-lTuChwRC.js";import{I as t,T as n}from"./CompositeRootContext-D-JA2IU8.js";import{m as r}from"./alert-dialog-title-BMsozTXl.js";import{l as i}from"./dialog-main-CVJj5zIQ.js";function a({render:e,...r}){return n({defaultTagName:`div`,render:e,props:t({className:i()},r)})}var o=e();function s(e){return(0,o.jsx)(r,{...e})}export{a as n,s as t};

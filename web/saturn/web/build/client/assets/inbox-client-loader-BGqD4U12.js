@@ -1,0 +1,1 @@
+import{E as e}from"./utils-DrlcUngY.js";var t=({params:t})=>{let{workspaceSlug:n,projectId:r}=t;throw e(`/${n}/projects/${r}/intake/`)};export{t as clientLoader};

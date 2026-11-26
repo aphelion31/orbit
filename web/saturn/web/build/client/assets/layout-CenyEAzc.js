@@ -1,0 +1,1 @@
+import{a as e,t}from"./components-2zpdLuUc.js";import{t as n}from"./jsx-runtime-lTuChwRC.js";var r=n(),i=()=>[{title:`Sign up - Saturn`},{name:`robots`,content:`index, nofollow`}],a=e(function(){return(0,r.jsx)(t,{})});export{a as default,i as meta};

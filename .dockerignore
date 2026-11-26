@@ -1,0 +1,7 @@
+target/
+storage/
+web/pulsar/node_modules/
+web/pulsar/build/
+web/pulsar/.react-router/
+.git/
+docs/screenshots/

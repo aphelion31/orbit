@@ -1,0 +1,1 @@
+import"./rolldown-runtime-BWaJ3C7D.js";import{B as e}from"./utils-DrlcUngY.js";import{t}from"./lib-hnzD48NM.js";import{t as n}from"./helper-C6C1ZCJ7.js";import{t as r}from"./jsx-runtime-lTuChwRC.js";e();var i=r();function a({href:e,replace:r,prefetch:a,scroll:o,shallow:s,...c}){return(0,i.jsx)(t,{to:n(e),replace:r,...c})}export{a as t};

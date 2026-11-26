@@ -1,0 +1,1 @@
+import{w as e}from"./CompositeRootContext-D-JA2IU8.js";import{t}from"./useBaseUiId-CPCQBzl6.js";function n(n,r){let i=t(n);return e(()=>(r(i),()=>{r(e=>e===i?void 0:e)}),[i,r]),i}export{n as t};

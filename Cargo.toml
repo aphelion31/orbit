@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/pulsar",
+    "crates/saturn",
+    "crates/orbit",
+]
+
+[profile.release]
+strip = true
+lto = "thin"
+codegen-units = 1
+
+[profile.dev.package.argon2]
+opt-level = 3

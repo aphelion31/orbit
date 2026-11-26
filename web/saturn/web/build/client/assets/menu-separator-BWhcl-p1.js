@@ -1,0 +1,1 @@
+import{t as e}from"./menu-separator-CnqmlpYM.js";import{t}from"./Separator-D3EamzUC.js";import{t as n}from"./jsx-runtime-lTuChwRC.js";var r=n();function i(n){return(0,r.jsx)(t,{...n,render:(0,r.jsx)(e,{})})}export{i as t};

@@ -1,0 +1,1 @@
+import{E as e}from"./utils-DrlcUngY.js";var t=({params:t,request:n})=>{let r=new URL(n.url).searchParams,i=t[`*`]||``;throw e(`/settings/profile/${i||`general`}?${r.toString()}`)};export{t as clientLoader};
