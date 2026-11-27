@@ -533,7 +533,7 @@ pub async fn migrate(db: &sqlx::PgPool) -> anyhow::Result<()> {
         }
     }
 
-    const SCHEMA: &str = "20261103142055";
+    const SCHEMA: &str = "20261125100456";
     let db_schema: Option<String> =
         sqlx::query_scalar("SELECT max(version) FROM schema_migrations")
             .fetch_one(db)
@@ -542,7 +542,7 @@ pub async fn migrate(db: &sqlx::PgPool) -> anyhow::Result<()> {
             .flatten();
     if db_schema.as_deref().is_none_or(|v| v < SCHEMA) {
         tracing::warn!(
-            "database schema {} is older than {SCHEMA} (Chatwoot 4.19)",
+            "database schema {} is older than {SCHEMA} (Chatwoot 4.20)",
             db_schema.as_deref().unwrap_or("unknown")
         );
     }
@@ -583,6 +583,10 @@ pub async fn migrate(db: &sqlx::PgPool) -> anyhow::Result<()> {
         .execute(db)
         .await
         .map_err(|e| anyhow::anyhow!("creating parity extras: {e}"))?;
+    sqlx::raw_sql(include_str!("../migrations/0008_chatwoot_4_20.sql"))
+        .execute(db)
+        .await
+        .map_err(|e| anyhow::anyhow!("applying chatwoot 4.20 schema delta: {e}"))?;
     Ok(())
 }
 
