@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160" role="img" aria-labelledby="orbit-dark-title orbit-dark-desc">
+  <title id="orbit-dark-title">Orbit mark (dark)</title>
+  <desc id="orbit-dark-desc">Orbit geometric emblem for dark backgrounds with central blue core and two orbiting satellite nodes.</desc>
+  <g fill="none" stroke-linecap="round">
+    <ellipse cx="80" cy="80" rx="60" ry="25" transform="rotate(-24 80 80)" stroke="#E2E8F0" stroke-width="5.5" stroke-opacity="0.9"/>
+    <ellipse cx="80" cy="80" rx="60" ry="25" transform="rotate(-24 80 80)" stroke="#58A6FF" stroke-width="2" stroke-opacity="0.5"/>
+  </g>
+  <circle cx="80" cy="80" r="27" fill="#3B82F6"/>
+  <circle cx="80" cy="80" r="14" fill="#FFFFFF" fill-opacity="0.22"/>
+  <circle cx="132" cy="57" r="9.5" fill="#F8FAFC" stroke="#0D1117" stroke-width="3"/>
+  <circle cx="28" cy="103" r="8" fill="#58A6FF" stroke="#0D1117" stroke-width="3"/>
+</svg>
