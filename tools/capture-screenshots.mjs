@@ -180,15 +180,19 @@ async function seedDemoConversation(pngBuf) {
 const pngBuf = await makeBugScreenshotPng();
 const convId = await seedDemoConversation(pngBuf);
 
-// 1. Login screen (verify default Orbit Blue #2781F6)
+// 1. Login screen (verify default Orbit Jade #2E9B78 + engraved Orbit logo)
 await page.goto(`${BASE}/app/login`, { waitUntil: "networkidle" });
 await page.waitForSelector('input[name="email"]');
 await page.waitForTimeout(300);
 const loginBtnBg = await page.locator('button[type="submit"]').evaluate((el) => getComputedStyle(el).backgroundColor);
-if (loginBtnBg !== "rgb(39, 129, 246)") {
-  throw new Error(`Expected default Orbit Blue login button rgb(39, 129, 246), got ${loginBtnBg}`);
+if (loginBtnBg !== "rgb(46, 155, 120)") {
+  throw new Error(`Expected default Orbit Jade login button rgb(46, 155, 120), got ${loginBtnBg}`);
 }
-console.log("✔ verified default Orbit Blue (#2781F6) on Pulsar login");
+const logoLoaded = await page.locator('img[src="/app/brand-assets/logo_thumbnail.svg"]').first().evaluate((img) => img.complete && img.naturalWidth > 0);
+if (!logoLoaded) {
+  throw new Error("Expected Orbit logo_thumbnail.svg to load");
+}
+console.log("✔ verified default Orbit Jade (#2E9B78) & Orbit logo on Pulsar login");
 await page.screenshot({ path: path.join(OUT_DIR, "login.png") });
 console.log("✔ captured login.png");
 
@@ -250,12 +254,12 @@ await page.locator('[data-orbit-theme-preset="cosmic-violet"]').click();
 await page.waitForFunction(() => getComputedStyle(document.documentElement).getPropertyValue("--blue-9").trim() === "124 58 237");
 await page.waitForFunction(() => {
   const btn = document.querySelector("#orbit-save-theme-btn");
-  const rect = document.querySelector("aside svg rect");
+  const icon = document.querySelector('aside a[href="/"] svg');
   return (
     btn &&
-    rect &&
+    icon &&
     getComputedStyle(btn).backgroundColor === "rgb(124, 58, 237)" &&
-    getComputedStyle(rect).fill === "rgb(124, 58, 237)"
+    getComputedStyle(icon).color === "rgb(124, 58, 237)"
   );
 });
 
@@ -290,7 +294,7 @@ await page.waitForFunction(() => {
 });
 console.log("✔ verified Saturn Backlog inherited custom theme #E11D48 dynamically");
 
-// Verify Saturn Orbit Theme popover & Reset to Orbit Blue default before final screenshot
+// Verify Saturn Orbit Theme popover & Reset to Orbit Jade default before final screenshot
 await page.locator("#orbit-theme-btn").click();
 await page.locator("#orbit-theme-popover").waitFor({ state: "visible" });
 const resetThemePromise = page.waitForResponse(
@@ -299,16 +303,16 @@ const resetThemePromise = page.waitForResponse(
 await page.locator("#orbit-saturn-reset-btn").click();
 const resetThemeRes = await resetThemePromise;
 if (resetThemeRes.status() !== 200) {
-  throw new Error(`Saturn Reset Blue failed: ${resetThemeRes.status()}`);
+  throw new Error(`Saturn Reset Default failed: ${resetThemeRes.status()}`);
 }
 await page.waitForFunction(() => {
   const bd = getComputedStyle(document.documentElement).getPropertyValue("--brand-default").trim().toLowerCase();
-  return bd === "#2781f6" || bd === "rgb(39, 129, 246)";
+  return bd === "#2e9b78" || bd === "rgb(46, 155, 120)";
 });
 await page.locator("#orbit-theme-btn").click();
 await page.waitForTimeout(300);
 await page.screenshot({ path: path.join(OUT_DIR, "saturn-backlog-sso.png") });
-console.log("✔ verified Saturn reset to Orbit Blue (#2781F6) & captured saturn-backlog-sso.png");
+console.log("✔ verified Saturn reset to Orbit Jade (#2E9B78) & captured saturn-backlog-sso.png");
 
 await browser.close();
 
