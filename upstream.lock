@@ -2,13 +2,13 @@
   "pulsar": {
     "repo": "https://github.com/aphelion31/pulsar.git",
     "branch": "develop",
-    "sha": "6c9e4413d90b64c9ce35553d9982ea2b7095abdb",
+    "sha": "0fd3bb427b7d30be1e760ba77c359cdb9e897ee8",
     "tag": "v1.3.0"
   },
   "saturn": {
     "repo": "https://github.com/aphelion31/saturn.git",
     "branch": "develop",
-    "sha": "b0c58c9f8844c91f652607eb10ceddfde612c570",
+    "sha": "6d483361375dc0416d27f70006e55cfb3a50936b",
     "tag": "v0.3.1"
   }
 }
