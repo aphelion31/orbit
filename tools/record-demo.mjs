@@ -226,7 +226,7 @@ async function setBanner(step, title) {
         document.body.appendChild(el);
       }
       el.innerHTML =
-        `<span style="padding:2px 7px;border-radius:9999px;background:#2781F6;color:#fff;font-size:11px;">${step}</span>` +
+        `<span style="padding:2px 7px;border-radius:9999px;background:#2E9B78;color:#fff;font-size:11px;">${step}</span>` +
         `<span>${title}</span>`;
     },
     { step, title }
@@ -244,7 +244,7 @@ async function pulseAndClick(locator, options = {}) {
         const ring = document.createElement("div");
         ring.style.cssText =
           `position:fixed;left:${cx - 14}px;top:${cy - 14}px;width:28px;height:28px;border-radius:9999px;` +
-          "border:2.5px solid #2781F6;background:rgba(39,129,246,0.22);z-index:99998;pointer-events:none;" +
+          "border:2.5px solid #2E9B78;background:rgba(46,155,120,0.22);z-index:99998;pointer-events:none;" +
           "transition:transform 240ms ease-out,opacity 240ms ease-out;";
         document.body.appendChild(ring);
         requestAnimationFrame(() => {
@@ -260,11 +260,11 @@ async function pulseAndClick(locator, options = {}) {
   await locator.click(options);
 }
 
-// Chapter 1: 1x Unified SSO Login (Orbit Blue #2781F6)
+// Chapter 1: 1x Unified SSO Login (Orbit Jade #2E9B78)
 await page.goto(`${BASE}/app/login`, { waitUntil: "networkidle" });
 await page.waitForSelector('input[name="email"]');
 await startRecording();
-await setBanner("1/4", "1x Unified Login · Orbit Blue (#2781F6)");
+await setBanner("1/4", "1x Unified Login · Orbit Jade (#2E9B78)");
 await page.waitForTimeout(600);
 
 allowUnauthExchangeProbe = false;
@@ -325,7 +325,7 @@ const saturnBoardUrl = createdIssue.url.replace(/\/issues\/[^/]+\/?$/, "/issues/
 await page.goto(`${BASE}${saturnBoardUrl}`, { waitUntil: "networkidle" });
 await page.locator(`text=${createdIssue.identifier}`).first().waitFor({ state: "visible", timeout: 15000 });
 await page.locator("#orbit-theme-btn").waitFor({ state: "visible", timeout: 15000 });
-await setBanner("4/4", "1x SSO Into Saturn Backlog · Synced Theme -> Reset Blue");
+await setBanner("4/4", "1x SSO Into Saturn Backlog · Synced Theme -> Reset Jade");
 await page.waitForTimeout(900);
 
 await page.locator("#orbit-theme-btn").evaluate((el) => el.click());

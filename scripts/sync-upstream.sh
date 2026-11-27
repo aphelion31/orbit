@@ -41,6 +41,12 @@ PROTECTED_ORBIT_ONLY = {
     "web/pulsar/app/components/next/OrbitThemeCard.tsx",
     "web/pulsar/app/lib/orbitTheme.ts",
     "web/pulsar/app/routes/settings/integrations/orbit.tsx",
+    "web/pulsar/public/brand-assets/logo.svg",
+    "web/pulsar/public/brand-assets/logo_dark.svg",
+    "web/pulsar/public/brand-assets/logo_thumbnail.svg",
+    "web/pulsar/public/favicon.ico",
+    "web/pulsar/public/favicon-32x32.png",
+    "web/pulsar/public/apple-touch-icon.png",
 }
 
 def git(repo: Path, *args: str, text: bool = True) -> subprocess.CompletedProcess:

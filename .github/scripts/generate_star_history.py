@@ -113,10 +113,10 @@ def render_svg(repository: str, dates: list[dt.date], today: dt.date | None = No
   :root {{ color-scheme: light dark; }}
   .bg {{ fill: #fff; }} text {{ fill: #57606a; font: 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }}
   .grid {{ stroke: #d8dee4; stroke-width: 1; }}
-  .area {{ fill: #2781f6; fill-opacity: .14; }} .line {{ fill: none; stroke: #2781f6; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }}
-  .point {{ fill: #fff; stroke: #2781f6; stroke-width: 2; }} .point.current {{ fill: #2781f6; stroke: #fff; stroke-width: 2; }}
+  .area {{ fill: #2e9b78; fill-opacity: .14; }} .line {{ fill: none; stroke: #2e9b78; stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }}
+  .point {{ fill: #fff; stroke: #2e9b78; stroke-width: 2; }} .point.current {{ fill: #2e9b78; stroke: #fff; stroke-width: 2; }}
   .heading {{ fill: #24292f; font-size: 17px; font-weight: 600; }} .metric {{ fill: #24292f; font-size: 18px; font-weight: 600; }}
-  @media (prefers-color-scheme: dark) {{ .bg {{ fill: #0d1117; }} text {{ fill: #8b949e; }} .grid {{ stroke: #30363d; }} .area {{ fill: #58a6ff; fill-opacity: .16; }} .line {{ stroke: #58a6ff; }} .point {{ fill: #0d1117; stroke: #58a6ff; }} .point.current {{ fill: #58a6ff; stroke: #0d1117; }} .heading,.metric {{ fill: #f0f6fc; }} }}
+  @media (prefers-color-scheme: dark) {{ .bg {{ fill: #0d1117; }} text {{ fill: #8b949e; }} .grid {{ stroke: #30363d; }} .area {{ fill: #4fd1a5; fill-opacity: .16; }} .line {{ stroke: #4fd1a5; }} .point {{ fill: #0d1117; stroke: #4fd1a5; }} .point.current {{ fill: #4fd1a5; stroke: #0d1117; }} .heading,.metric {{ fill: #f0f6fc; }} }}
 </style>
 <rect class="bg" width="100%" height="100%" rx="6"/>
 <text class="heading" x="{left}" y="28">GitHub stars over time</text>

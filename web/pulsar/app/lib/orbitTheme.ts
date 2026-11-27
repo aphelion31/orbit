@@ -23,18 +23,18 @@ export const LEGACY_PULSAR_THEME_KEY = "pulsar.theme";
 export const SATURN_THEME_MODE_KEY = "theme";
 
 export const DEFAULT_ORBIT_THEME: OrbitThemeConfig = {
-  preset: "orbit-blue",
+  preset: "orbit-jade",
   mode: "auto",
-  primary: "#2781F6",
+  primary: "#2E9B78",
   surface: "",
   radius: "md",
 };
 
 export const ORBIT_THEME_PRESETS: OrbitThemePreset[] = [
-  { id: "orbit-blue", name: "Orbit Blue (Default)", primary: "#2781F6", description: "Signature Orbit & Pulsar blue" },
+  { id: "orbit-jade", name: "Orbit Jade (Default)", primary: "#2E9B78", description: "Signature Orbit engraved jade" },
+  { id: "orbit-blue", name: "Orbit Blue", primary: "#2781F6", description: "Classic Pulsar & Orbit blue" },
   { id: "royal-indigo", name: "Royal Indigo", primary: "#4F46E5", description: "Deep indigo editorial accent" },
   { id: "cosmic-violet", name: "Cosmic Violet", primary: "#7C3AED", description: "Vibrant violet studio tone" },
-  { id: "emerald", name: "Emerald", primary: "#059669", description: "Crisp support green" },
   { id: "ocean-teal", name: "Ocean Teal", primary: "#0D9488", description: "Balanced teal contrast" },
   { id: "crimson-rose", name: "Crimson Rose", primary: "#E11D48", description: "High-visibility rose" },
   { id: "sunset-amber", name: "Sunset Amber", primary: "#D97706", description: "Warm amber accent" },
@@ -130,43 +130,43 @@ export function computeBrandPalette(hex: string, isDark: boolean): Record<string
   if (norm === DEFAULT_ORBIT_THEME.primary) {
     return isDark
       ? {
-          "--blue-1": "10 17 28",
-          "--blue-2": "15 24 38",
-          "--blue-3": "15 39 72",
-          "--blue-4": "10 49 99",
-          "--blue-5": "18 61 117",
-          "--blue-6": "29 84 134",
-          "--blue-7": "40 89 156",
-          "--blue-8": "48 106 186",
-          "--blue-9": "39 129 246",
-          "--blue-10": "21 116 231",
-          "--blue-11": "126 182 255",
-          "--blue-12": "205 227 255",
-          "--solid-blue": "15 57 102",
-          "--solid-blue-2": "26 29 35",
-          "--text-blue": "213 234 255",
-          "--border-blue-strong": "201 226 255",
-          "--border-blue": "39, 129, 246, 0.5",
+          "--blue-1": "11 23 19",
+          "--blue-2": "15 31 26",
+          "--blue-3": "18 48 39",
+          "--blue-4": "21 63 50",
+          "--blue-5": "25 79 62",
+          "--blue-6": "31 98 77",
+          "--blue-7": "37 118 92",
+          "--blue-8": "42 138 107",
+          "--blue-9": "46 155 120",
+          "--blue-10": "59 175 137",
+          "--blue-11": "116 214 182",
+          "--blue-12": "204 244 231",
+          "--solid-blue": "18 58 46",
+          "--solid-blue-2": "24 31 29",
+          "--text-blue": "204 244 231",
+          "--border-blue-strong": "176 227 210",
+          "--border-blue": "46, 155, 120, 0.5",
           "--orbit-brand-ink": "#FFFFFF",
         }
       : {
-          "--blue-1": "251 253 255",
-          "--blue-2": "245 249 255",
-          "--blue-3": "233 243 255",
-          "--blue-4": "218 236 255",
-          "--blue-5": "201 226 255",
-          "--blue-6": "181 213 255",
-          "--blue-7": "155 195 252",
-          "--blue-8": "117 171 247",
-          "--blue-9": "39 129 246",
-          "--blue-10": "16 115 233",
-          "--blue-11": "8 109 224",
-          "--blue-12": "11 50 101",
-          "--solid-blue": "218 236 255",
-          "--solid-blue-2": "251 253 255",
-          "--text-blue": "1 22 44",
-          "--border-blue-strong": "18 61 117",
-          "--border-blue": "39, 129, 246, 0.5",
+          "--blue-1": "249 254 252",
+          "--blue-2": "241 251 247",
+          "--blue-3": "226 246 239",
+          "--blue-4": "204 238 226",
+          "--blue-5": "176 227 210",
+          "--blue-6": "142 212 190",
+          "--blue-7": "102 194 166",
+          "--blue-8": "66 173 139",
+          "--blue-9": "46 155 120",
+          "--blue-10": "37 134 103",
+          "--blue-11": "28 112 86",
+          "--blue-12": "15 61 47",
+          "--solid-blue": "204 238 226",
+          "--solid-blue-2": "249 254 252",
+          "--text-blue": "11 46 35",
+          "--border-blue-strong": "24 94 72",
+          "--border-blue": "46, 155, 120, 0.5",
           "--orbit-brand-ink": "#FFFFFF",
         };
   }
@@ -269,7 +269,7 @@ export function normalizeOrbitTheme(raw: unknown): OrbitThemeConfig {
   const mode: ThemeMode = obj.mode === "light" || obj.mode === "dark" || obj.mode === "auto" ? obj.mode : "auto";
   const radius: ThemeRadius = obj.radius === "sm" || obj.radius === "lg" || obj.radius === "md" ? obj.radius : "md";
   const rawPreset = typeof obj.preset === "string" ? obj.preset.trim().slice(0, 32) : "";
-  const preset = rawPreset || (primary === DEFAULT_ORBIT_THEME.primary ? "orbit-blue" : "custom");
+  const preset = rawPreset || (primary === DEFAULT_ORBIT_THEME.primary ? "orbit-jade" : "custom");
   return { preset, mode, primary, surface, radius };
 }
 
