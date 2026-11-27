@@ -8,18 +8,18 @@
   var POPOVER_ID = "orbit-theme-popover";
 
   var DEFAULT_THEME = {
-    preset: "orbit-blue",
+    preset: "orbit-jade",
     mode: "auto",
-    primary: "#2781F6",
+    primary: "#2E9B78",
     surface: "",
     radius: "md",
   };
 
   var PRESETS = [
-    { id: "orbit-blue", name: "Orbit Blue (Default)", primary: "#2781F6" },
+    { id: "orbit-jade", name: "Orbit Jade (Default)", primary: "#2E9B78" },
+    { id: "orbit-blue", name: "Orbit Blue", primary: "#2781F6" },
     { id: "royal-indigo", name: "Royal Indigo", primary: "#4F46E5" },
     { id: "cosmic-violet", name: "Cosmic Violet", primary: "#7C3AED" },
-    { id: "emerald", name: "Emerald", primary: "#059669" },
     { id: "ocean-teal", name: "Ocean Teal", primary: "#0D9488" },
     { id: "crimson-rose", name: "Crimson Rose", primary: "#E11D48" },
     { id: "sunset-amber", name: "Sunset Amber", primary: "#D97706" },
@@ -37,7 +37,7 @@
   }
 
   function hexToRgb(hex) {
-    var h = normalizeHex(hex) || "#2781F6";
+    var h = normalizeHex(hex) || "#2E9B78";
     return [
       parseInt(h.slice(1, 3), 16),
       parseInt(h.slice(3, 5), 16),
@@ -87,7 +87,7 @@
       typeof obj.preset === "string" && obj.preset.trim()
         ? obj.preset.trim().slice(0, 32)
         : primary === DEFAULT_THEME.primary
-          ? "orbit-blue"
+          ? "orbit-jade"
           : "custom";
     return { preset: preset, mode: mode, primary: primary, surface: surface, radius: radius };
   }
@@ -364,7 +364,7 @@
     var html =
       "<div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;'>" +
       "<strong style='font-size:12px;font-weight:600;'>Orbit Theme</strong>" +
-      "<button id='orbit-saturn-reset-btn' type='button' style='border:1px solid rgba(148,163,184,0.4);background:transparent;color:inherit;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;'>Reset Blue</button>" +
+      "<button id='orbit-saturn-reset-btn' type='button' style='border:1px solid rgba(148,163,184,0.4);background:transparent;color:inherit;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;'>Reset Default</button>" +
       "</div>" +
       "<div style='display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:10px;'>" +
       "<button type='button' data-orbit-mode='light' style='padding:5px 0;border-radius:7px;border:1px solid rgba(148,163,184,0.3);cursor:pointer;font-size:11px;font-weight:500;'>Light</button>" +
@@ -414,7 +414,7 @@
       "</div>" +
       "<div style='display:flex;align-items:center;justify-content:space-between;gap:8px;'>" +
       "<span id='orbit-saturn-theme-status' style='font-size:11px;min-height:14px;'></span>" +
-      "<button id='orbit-saturn-save-btn' type='button' style='padding:5px 12px;border-radius:8px;border:none;background:var(--brand-default,#2781F6);color:var(--orbit-brand-ink,#fff);font-size:11px;font-weight:600;cursor:pointer;'>Save Theme</button>" +
+      "<button id='orbit-saturn-save-btn' type='button' style='padding:5px 12px;border-radius:8px;border:none;background:var(--brand-default,#2E9B78);color:var(--orbit-brand-ink,#fff);font-size:11px;font-weight:600;cursor:pointer;'>Save Theme</button>" +
       "</div>";
 
     pop.innerHTML = html;

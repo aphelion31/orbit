@@ -14,7 +14,7 @@ use crate::bridge::OrbitState;
 
 const CONFIG_NAME: &str = "ORBIT_THEME";
 const BRIDGE_JS: &str = include_str!("orbit_theme_bridge.js");
-pub const DEFAULT_PRIMARY_HEX: &str = "#2781F6";
+pub const DEFAULT_PRIMARY_HEX: &str = "#2E9B78";
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OrbitTheme {
@@ -28,7 +28,7 @@ pub struct OrbitTheme {
 impl Default for OrbitTheme {
     fn default() -> Self {
         Self {
-            preset: "orbit-blue".to_string(),
+            preset: "orbit-jade".to_string(),
             mode: "auto".to_string(),
             primary: DEFAULT_PRIMARY_HEX.to_string(),
             surface: String::new(),
@@ -72,7 +72,7 @@ fn sanitize_preset(raw: Option<&str>, primary: &str) -> String {
         }
     }
     if primary == DEFAULT_PRIMARY_HEX {
-        "orbit-blue".to_string()
+        "orbit-jade".to_string()
     } else {
         "custom".to_string()
     }
@@ -229,10 +229,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn default_theme_is_orbit_blue() {
+    fn default_theme_is_orbit_jade() {
         let def = OrbitTheme::default();
-        assert_eq!(def.primary, "#2781F6");
-        assert_eq!(def.preset, "orbit-blue");
+        assert_eq!(def.primary, "#2E9B78");
+        assert_eq!(def.preset, "orbit-jade");
         assert_eq!(def.mode, "auto");
         assert_eq!(def.surface, "");
         assert_eq!(def.radius, "md");

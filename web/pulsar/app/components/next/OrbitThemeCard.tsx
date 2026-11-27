@@ -76,7 +76,7 @@ export default function OrbitThemeCard() {
       const reset = await resetOrbitTheme(true);
       setThemeState(reset);
       setHexDraft(reset.primary);
-      setSavedMsg("Reset to Orbit Blue default");
+      setSavedMsg("Reset to Orbit Jade default");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to reset theme");
     } finally {
@@ -109,7 +109,7 @@ export default function OrbitThemeCard() {
             </span>
           </div>
           <p className="mt-1 text-xs text-n-slate-11">
-            Default is Orbit Blue ({DEFAULT_ORBIT_THEME.primary}). Custom themes update Pulsar CS Desk and Saturn Backlog together.
+            Default is Orbit Jade ({DEFAULT_ORBIT_THEME.primary}) matching the Orbit logo. Custom themes update Pulsar CS Desk and Saturn Backlog together.
           </p>
         </div>
 
@@ -120,7 +120,7 @@ export default function OrbitThemeCard() {
           className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-n-weak bg-n-background px-2.5 text-xs font-medium text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12 disabled:opacity-50"
         >
           <RotateCcw className="size-3.5" />
-          Reset to Orbit Blue
+          Reset to Orbit Jade
         </button>
       </div>
 
@@ -261,7 +261,7 @@ export default function OrbitThemeCard() {
                 if (valid) updatePreview({ preset: "custom", primary: valid });
               }}
               onBlur={() => setHexDraft(theme.primary)}
-              placeholder="#2781F6"
+              placeholder="#2E9B78"
               className="h-9 w-full rounded-lg border border-n-weak bg-n-background px-3 font-mono text-xs text-n-slate-12 focus:border-n-brand focus:outline-none"
             />
           </div>

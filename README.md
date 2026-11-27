@@ -1,9 +1,6 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/orbit-mark-dark.svg">
-  <img src="docs/brand/orbit-mark.svg" alt="Orbit mark" width="120">
-</picture>
+<img src="docs/brand/orbit-mark.svg" alt="Orbit" width="128">
 
 # Orbit
 
@@ -16,7 +13,7 @@
 [![GitHub Stars](https://img.shields.io/github/stars/aphelion31/orbit?style=flat-square&logo=github)](https://github.com/aphelion31/orbit/stargazers)
 [![Release](https://img.shields.io/github/v/release/aphelion31/orbit?style=flat-square&logo=github)](https://github.com/aphelion31/orbit/releases)
 [![Rust](https://img.shields.io/badge/backend-Rust%20(Axum%20%2B%20SQLx)-orange?style=flat-square&logo=rust)](https://github.com/aphelion31/orbit)
-[![Auth](https://img.shields.io/badge/auth-Argon2id-2781F6?style=flat-square)](docs/architectures/03.BRIDGE-COMPAT.md)
+[![Auth](https://img.shields.io/badge/auth-Argon2id-2E9B78?style=flat-square)](docs/architectures/03.BRIDGE-COMPAT.md)
 [![License](https://img.shields.io/badge/license-MIT%20%2B%20AGPL--3.0-lightgrey?style=flat-square)](LICENSE)
 
 </div>
@@ -125,7 +122,7 @@ Captured headlessly against a live **Orbit** server connected to PostgreSQL (**z
 
 <table>
   <tr>
-    <td align="center"><a href="docs/screenshots/login.png"><img src="docs/screenshots/login.png" alt="Orbit Unified Login with Orbit Blue default" width="440" /></a><br>1x Unified Login (Orbit Blue <code>#2781F6</code>)</td>
+    <td align="center"><a href="docs/screenshots/login.png"><img src="docs/screenshots/login.png" alt="Orbit Unified Login with Orbit Jade default" width="440" /></a><br>1x Unified Login (Orbit Jade <code>#2E9B78</code>)</td>
     <td align="center"><a href="docs/screenshots/cs-inbox-context-menu.png"><img src="docs/screenshots/cs-inbox-context-menu.png" alt="Right-click CS message bubble Masukin Backlog Orbit" width="440" /></a><br>Right-Click Chat -> <code>Masukin Backlog (Orbit)</code></td>
   </tr>
   <tr>
@@ -158,9 +155,9 @@ Both engines hash credentials with **Argon2id** (`m=19456,t=2,p=1`): Pulsar hash
 
 ## Custom Theme Engine
 
-Orbit defaults to **Orbit Blue (`#2781F6`)** across both **Pulsar CS Desk (`/app/*`)** and **Saturn Backlog (`/`, `/god-mode/`, `/spaces/`)**, and lets teams customize the entire suite live:
+Orbit defaults to **Orbit Jade (`#2E9B78`)** matching the Orbit brand mark across both **Pulsar CS Desk (`/app/*`)** and **Saturn Backlog (`/`, `/god-mode/`, `/spaces/`)**, and lets teams customize the entire suite live:
 
-- **8 curated presets** (`Orbit Blue`, `Royal Indigo`, `Cosmic Violet`, `Emerald`, `Ocean Teal`, `Crimson Rose`, `Sunset Amber`, `Graphite`), custom `#RRGGBB` accent picker, optional surface tint, Light/Dark/System mode, and corner radius (`Sharp` / `Default` / `Rounded`).
+- **8 curated presets** (`Orbit Jade`, `Orbit Blue`, `Royal Indigo`, `Cosmic Violet`, `Ocean Teal`, `Crimson Rose`, `Sunset Amber`, `Graphite`), custom `#RRGGBB` accent picker, optional surface tint, Light/Dark/System mode, and corner radius (`Sharp` / `Default` / `Rounded`).
 - **Dynamic component cascade**: Tailwind v4 CSS variables (`--blue-1..12`, `--color-n-brand`, `--color-accent`, `--orbit-brand-ink`) and Saturn's `--brand-*` tokens update buttons, chat bubbles, badges, focus rings, logos, charts, links, and Saturn's floating dock in real time with WCAG contrast-aware text.
 - **Cross-app persistence**: stored via `GET/PUT /api/v1/orbit/theme` (accepting Pulsar headers or Saturn cookie), served to Saturn via `GET /api/v1/orbit/theme.js`, and editable from **Orbit Settings**, **Sidebar Profile Menu**, **`⌘K` Appearance**, or Saturn's floating **Theme** dock.
 

@@ -47,6 +47,16 @@ async fn health(State(st): State<OrbitState>) -> Response {
         .into_response()
 }
 
+async fn favicon_ico() -> impl IntoResponse {
+    (
+        [
+            (axum::http::header::CONTENT_TYPE, "image/x-icon"),
+            (axum::http::header::CACHE_CONTROL, "public, max-age=86400"),
+        ],
+        include_bytes!("favicon.ico").as_slice(),
+    )
+}
+
 pub fn build_router(state: OrbitState) -> Router {
     let orbit_api = Router::new()
         .nest("/api/v1/orbit/accounts/{account_id}", bridge::routes())
@@ -57,6 +67,7 @@ pub fn build_router(state: OrbitState) -> Router {
     Router::new()
         .route("/health", get(health))
         .route("/ready", get(health))
+        .route("/favicon.ico", get(favicon_ico))
         .route("/robots.txt", get(saturn::web::robots_txt))
         .with_state(state.clone())
         .merge(orbit_api)
