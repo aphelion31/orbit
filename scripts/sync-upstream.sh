@@ -30,6 +30,12 @@ def get_flag(name: str) -> str | None:
 
 pulsar_override = get_flag("--pulsar-dir")
 saturn_override = get_flag("--saturn-dir")
+only_repo = get_flag("--only")
+pulsar_ref = get_flag("--pulsar-ref")
+saturn_ref = get_flag("--saturn-ref")
+if only_repo and only_repo not in ("pulsar", "saturn"):
+    raise SystemExit(f"Invalid --only value: {only_repo} (expected 'pulsar' or 'saturn')")
+selected_names = (only_repo,) if only_repo else ("pulsar", "saturn")
 
 LOCK_PATH = ROOT / "upstream.lock"
 lock = json.loads(LOCK_PATH.read_text())
@@ -74,7 +80,7 @@ def map_pulsar(rel: str) -> str | None:
         return "crates/pulsar/" + rel
     if rel.startswith("migrations/"):
         return "crates/pulsar/" + rel
-    if rel in ("features.json", "Cargo.toml"):
+    if rel in ("features.json", "installation_defaults.json", "Cargo.toml"):
         return "crates/pulsar/" + rel
     if rel.startswith("web/app/"):
         return "web/pulsar/app/" + rel[len("web/app/"):]
@@ -158,23 +164,25 @@ def verify_orbit_guards() -> None:
 tmpdir = Path(tempfile.mkdtemp(prefix="orbit-sync-"))
 try:
     repos: dict[str, Path] = {}
-    if pulsar_override:
-        repos["pulsar"] = Path(pulsar_override).resolve()
-    elif use_remote:
-        dst = tmpdir / "pulsar"
-        subprocess.run(["git", "clone", "--branch", lock["pulsar"]["branch"], lock["pulsar"]["repo"], str(dst)], check=True)
-        repos["pulsar"] = dst
-    else:
-        repos["pulsar"] = (ROOT.parent / "pulsar").resolve()
+    if "pulsar" in selected_names:
+        if pulsar_override:
+            repos["pulsar"] = Path(pulsar_override).resolve()
+        elif use_remote:
+            dst = tmpdir / "pulsar"
+            subprocess.run(["git", "clone", "--branch", lock["pulsar"]["branch"], lock["pulsar"]["repo"], str(dst)], check=True)
+            repos["pulsar"] = dst
+        else:
+            repos["pulsar"] = (ROOT.parent / "pulsar").resolve()
 
-    if saturn_override:
-        repos["saturn"] = Path(saturn_override).resolve()
-    elif use_remote:
-        dst = tmpdir / "saturn"
-        subprocess.run(["git", "clone", "--branch", lock["saturn"]["branch"], lock["saturn"]["repo"], str(dst)], check=True)
-        repos["saturn"] = dst
-    else:
-        repos["saturn"] = (ROOT.parent / "saturn").resolve()
+    if "saturn" in selected_names:
+        if saturn_override:
+            repos["saturn"] = Path(saturn_override).resolve()
+        elif use_remote:
+            dst = tmpdir / "saturn"
+            subprocess.run(["git", "clone", "--branch", lock["saturn"]["branch"], lock["saturn"]["repo"], str(dst)], check=True)
+            repos["saturn"] = dst
+        else:
+            repos["saturn"] = (ROOT.parent / "saturn").resolve()
 
     mappers = {"pulsar": map_pulsar, "saturn": map_saturn}
     conflicts: list[str] = []
@@ -184,13 +192,14 @@ try:
 
     pending_updates: dict[str, tuple[str, str]] = {}
 
-    for name in ("pulsar", "saturn"):
+    for name in selected_names:
         repo = repos[name]
         if not (repo / ".git").exists():
             raise SystemExit(f"✖ Upstream repo not found at {repo} (pass --remote to clone)")
         base_sha = lock[name]["sha"]
+        ref_override = pulsar_ref if name == "pulsar" else saturn_ref
         is_custom = (name == "pulsar" and pulsar_override) or (name == "saturn" and saturn_override)
-        target_ref = "HEAD" if is_custom else lock[name]["branch"]
+        target_ref = ref_override or ("HEAD" if is_custom else lock[name]["branch"])
         new_sha = git(repo, "rev-parse", target_ref).stdout.strip()
         if base_sha == new_sha:
             print(f"✔ {name}: already up-to-date ({new_sha[:7]})")
@@ -206,6 +215,8 @@ try:
             status, rel = parts[0], parts[1]
             if rel == "src/main.rs":
                 warnings.append(f"{name}: src/main.rs changed upstream — verify new `mod` items in crates/{name}/src/lib.rs")
+            if rel.startswith("migrations/"):
+                warnings.append(f"{name}: {rel} changed upstream — verify it is wired in crates/{name}/src/lib.rs")
             dst_rel = mappers[name](rel)
             if dst_rel:
                 mapped_ops.append((status, rel, dst_rel))

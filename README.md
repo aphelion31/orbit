@@ -21,7 +21,7 @@
 <div align="center">
 
   <a href="https://github.com/aphelion31/orbit/releases/download/readme-assets/orbit-demo.mp4">
-    <img src="https://github.com/aphelion31/orbit/releases/download/readme-assets/orbit-demo.gif" alt="Orbit end-to-end walkthrough: 1x SSO, right-click CS chat to Saturn backlog with attachment, live custom theme studio, and reset to Orbit Blue" width="900">
+    <img src="https://github.com/aphelion31/orbit/releases/download/readme-assets/orbit-demo.gif" alt="Orbit end-to-end walkthrough: 1x SSO, right-click CS chat to Saturn backlog with attachment, live custom theme studio, and reset to Orbit Jade" width="900">
   </a>
 
   <p><em>End-to-end walkthrough (1x speed) — click preview to open full MP4</em></p>
@@ -29,7 +29,7 @@
 </div>
 
 > **Attribution:** Orbit is not a hidden rebrand — it explicitly unifies two existing Rust rewrites into a single runtime while preserving both products' visual identities and database schemas:
-> - **Pulsar** (`crates/pulsar`, MIT — Rust + React Router rewrite of [Chatwoot](https://github.com/chatwoot/chatwoot), Chatwoot © Chatwoot Inc.) mounted at **`/app/`**
+> - **Pulsar** (`crates/pulsar`, MIT — Rust + React Router rewrite of [Chatwoot](https://github.com/chatwoot/chatwoot) 4.20.1, Chatwoot © Chatwoot Inc.) mounted at **`/app/`**
 > - **Saturn** (`crates/saturn`, AGPL-3.0 — Rust + React Router rewrite of [Plane](https://github.com/makeplane/plane), Plane © Plane Software, Inc.) mounted at **`/`** (plus `/god-mode/` admin & `/spaces/` public boards)
 > - **Orbit Bridge** (`crates/orbit/`) connecting Pulsar and Saturn in-process on **one port (`:3000`)**
 
@@ -100,8 +100,8 @@ Measured directly on the compiled macOS `arm64` `--release` binaries, Rust sourc
 
 | Dimension | Original Chatwoot + Plane | Separate Pulsar + Saturn | Unified Orbit (Single Binary) |
 | --- | --- | --- | --- |
-| **Backend source LOC** | `432,412` (`301,161` Ruby + `131,251` Python/TS) | `90,487` (`52,605` Pulsar + `37,882` Saturn) | **`92,305`** across `112` `.rs` files (**4.7× smaller than upstream**) |
-| **Compiled release binary** | `709 MB` Chatwoot Docker + `246 MiB` Plane `.venv` | `47.2 MiB` (`28.1 MiB` + `19.1 MiB`) | **`32.1 MiB`** single `orbit` binary (**−32% vs separate**) |
+| **Backend source LOC** | `432,412` (`301,161` Ruby + `131,251` Python/TS) | `90,487` (`52,605` Pulsar + `37,882` Saturn) | **`93,620`** across `113` `.rs` files (**4.6× smaller than upstream**) |
+| **Compiled release binary** | `709 MB` Chatwoot Docker + `246 MiB` Plane `.venv` | `47.2 MiB` (`28.1 MiB` + `19.1 MiB`) | **`32.3 MiB`** single `orbit` binary (**−32% vs separate**) |
 | **Frontend SPAs** | Vite/Vue + Next/RR + Node SSR/Live | Static React Router (`30 MiB` + `61 MiB`) | Same static SPAs on `:3000` (**zero Node runtime**) |
 
 ### Runtime &amp; Integration Overhead
@@ -169,6 +169,7 @@ Pull new features and fixes from **Pulsar** and **Saturn** anytime locally or vi
 ./scripts/sync-upstream.sh --check   # preview upstream changes
 ./scripts/sync-upstream.sh           # 3-way merge + build + tests + smoke.sh
 ./scripts/sync-upstream.sh --remote  # fetch directly from GitHub upstream repos
+./scripts/sync-upstream.sh --only pulsar --pulsar-ref <sha>  # selective sync without touching Orbit branding
 ```
 
 ---

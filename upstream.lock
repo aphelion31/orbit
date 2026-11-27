@@ -2,7 +2,7 @@
   "pulsar": {
     "repo": "https://github.com/aphelion31/pulsar.git",
     "branch": "develop",
-    "sha": "6c9e4413d90b64c9ce35553d9982ea2b7095abdb",
+    "sha": "a864c254f2f2f5d2654c334df69f1bad9b7e957e",
     "tag": "v1.3.0"
   },
   "saturn": {
