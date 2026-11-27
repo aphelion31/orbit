@@ -1,91 +1,48 @@
-<h1 align="center">Orbit</h1>
+<div align="center">
 
-<p align="center">
-  <strong>Unified <a href="https://github.com/aphelion31/pulsar">Pulsar</a> (CS Desk) + <a href="https://github.com/aphelion31/saturn">Saturn</a> (Project &amp; Backlog) in one compiled Rust binary</strong>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/orbit-mark-dark.svg">
+  <img src="docs/brand/orbit-mark.svg" alt="Orbit mark" width="120">
+</picture>
+
+# Orbit
+
+<p>
+  <strong>Unified Customer Support Desk + Project &amp; Backlog in one compiled Rust binary.</strong><br>
+  Pulsar CS Desk + Saturn Backlog on one port (<code>:3000</code>) with 1x SSO, Argon2id security, and live custom themes.
 </p>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/backend-Rust%20(Axum%20%2B%20SQLx)-orange" alt="Rust">
-  <img src="https://img.shields.io/badge/frontend-React%20Router-blue" alt="React Router">
-  <img src="https://img.shields.io/badge/auth-Argon2id-success" alt="Argon2id">
-  <img src="https://img.shields.io/badge/license-MIT%20%2B%20AGPL--3.0-lightgrey" alt="License">
-</p>
+[![Last Commit](https://img.shields.io/github/last-commit/aphelion31/orbit/develop?style=flat-square&logo=github)](https://github.com/aphelion31/orbit/commits/develop)
+[![GitHub Stars](https://img.shields.io/github/stars/aphelion31/orbit?style=flat-square&logo=github)](https://github.com/aphelion31/orbit/stargazers)
+[![Release](https://img.shields.io/github/v/release/aphelion31/orbit?style=flat-square&logo=github)](https://github.com/aphelion31/orbit/releases)
+[![Rust](https://img.shields.io/badge/backend-Rust%20(Axum%20%2B%20SQLx)-orange?style=flat-square&logo=rust)](https://github.com/aphelion31/orbit)
+[![Auth](https://img.shields.io/badge/auth-Argon2id-2781F6?style=flat-square)](docs/architectures/03.BRIDGE-COMPAT.md)
+[![License](https://img.shields.io/badge/license-MIT%20%2B%20AGPL--3.0-lightgrey?style=flat-square)](LICENSE)
+
+</div>
+
+<div align="center">
+
+  <a href="https://github.com/aphelion31/orbit/releases/download/readme-assets/orbit-demo.mp4">
+    <img src="https://github.com/aphelion31/orbit/releases/download/readme-assets/orbit-demo.gif" alt="Orbit end-to-end walkthrough: 1x SSO, right-click CS chat to Saturn backlog with attachment, live custom theme studio, and reset to Orbit Blue" width="900">
+  </a>
+
+  <p><em>End-to-end walkthrough (1x speed) — click preview to open full MP4</em></p>
+
+</div>
 
 > **Attribution:** Orbit is not a hidden rebrand — it explicitly unifies two existing Rust rewrites into a single runtime while preserving both products' visual identities and database schemas:
 > - **Pulsar** (`crates/pulsar`, MIT — Rust + React Router rewrite of [Chatwoot](https://github.com/chatwoot/chatwoot), Chatwoot © Chatwoot Inc.) mounted at **`/app/`**
 > - **Saturn** (`crates/saturn`, AGPL-3.0 — Rust + React Router rewrite of [Plane](https://github.com/makeplane/plane), Plane © Plane Software, Inc.) mounted at **`/`** (plus `/god-mode/` admin & `/spaces/` public boards)
-> - **Orbit Bridge** (`crates/orbit/`) connecting Pulsar and Saturn in-process on **one port (`:3000`)** with **1x Unified SSO**, **right-click bug-to-backlog escalation**, **attachment carry-over**, **Argon2id login security**, and **live Saturn -> Pulsar status notes**.
+> - **Orbit Bridge** (`crates/orbit/`) connecting Pulsar and Saturn in-process on **one port (`:3000`)**
 
 ---
 
-## Key Features
-
-1. **Right-Click Bug Reporting Directly From Client Chat (`Masukin Backlog (Orbit)`)**
-   - Right-click any message bubble in **Pulsar CS Desk** (or click the hover bug icon / right sidebar action) -> opens **Push Bug to Orbit Backlog**.
-   - Pre-fills title, customer contact context, message text, and link back to the CS conversation.
-   - Push either to a configurable **Todo / Board State** (e.g., `Backlog`, `Todo`, `In Progress`) or to Saturn's **Intake (Triage)** queue.
-2. **Automatic Chat Attachment Carry-Over**
-   - Attachments on the CS message (screenshots, logs) are copied from Pulsar storage into Saturn's `file_assets` table & disk storage (`include_attachments: true`) and linked directly inside the Saturn work item.
-3. **Configurable Default Destination**
-   - Account admins set default Workspace, Project, Push Mode (Board State vs Intake), Default State, Priority, and Live Note toggle under **Settings -> Integrations -> Orbit Backlog (Saturn)**.
-4. **Live Bidirectional Status Sync (No External Webhooks)**
-   - Right sidebar in CS Inbox renders live Saturn issue badges & clickable deep links.
-   - Moving a linked work item's state in Saturn (e.g. `Backlog` -> `Done`) broadcasts through Saturn's in-process `InternalEvent` bus and automatically posts an internal **private note** in the linked Pulsar conversation.
-5. **1x Unified SSO & 1-Click Switcher**
-   - Signing into Pulsar automatically syncs a Saturn `session-id` cookie (`/api/v1/orbit/auth/sync_saturn`); signing into Saturn exchanges into Pulsar devise headers (`/api/v1/orbit/auth/exchange_saturn`); unified sign-out clears both.
-   - Jump between **Saturn Backlog ↗** (`/`) and **Pulsar CS Desk ↗** (`/app/`) seamlessly on the same origin.
-6. **Argon2id Password & Session Security (`Pulsar v1.3.0` + `Saturn v0.3.1`)**
-   - Passwords across both Pulsar and Saturn use **Argon2id** (`m=19456,t=2,p=1`): Pulsar hashes login passwords + devise session tokens (`$argon2id$...`), while Saturn uses Django-compatible `argon2$argon2id$v=19$...` with constant-time dummy verification (`verify_dummy_async`) on unknown/inactive accounts.
-   - Legacy Chatwoot (`bcrypt`) and Plane/Django (`pbkdf2_sha256`) hashes still verify cleanly and upgrade automatically on login.
-7. **Automatic 3-Way Upstream Sync (`upstream.lock` + `scripts/sync-upstream.sh`)**
-   - Sync new features/fixes from **Pulsar** and **Saturn** anytime locally (`./scripts/sync-upstream.sh`) or automatically on GitHub Actions (`.github/workflows/sync-upstream.yml`, every 6 hours or on `repository_dispatch`) using `git merge-file` 3-way merging + Orbit feature safety guards, so right-click bug-to-backlog and 1x SSO stay intact.
-8. **Unified Orbit Blue Default & Cross-App Custom Theme Engine**
-   - Default **Orbit Blue (`#2781F6`)** brand palette unified across both **Pulsar CS Desk (`/app/*`)** and **Saturn Backlog (`/`, `/god-mode/`, `/spaces/`)**.
-   - Supports 8 curated presets, custom `#RRGGBB` accent color picker, optional surface tint, Light/Dark/System mode, corner radius (`Sharp` / `Default` / `Rounded`), zero-FOUC boot, and WCAG contrast-aware foreground ink (`--orbit-brand-ink`) — updating buttons, chat bubbles, badges, focus rings, logos, charts, links, and Saturn's floating dock dynamically.
-   - Workspace themes persist via `GET/PUT /api/v1/orbit/theme` (accepting Pulsar headers or Saturn session cookie), sync live across tabs, and can be customized from **Orbit Settings**, **Sidebar Profile Menu**, **`⌘K` Appearance**, or Saturn's floating **Theme** dock.
-
----
-
-## UI Screenshots
-
-All screenshots below were captured against a live running **Orbit** server connected to PostgreSQL via Playwright headless Chromium (**zero console/hydration errors, zero failed HTTP requests**):
-
-### Unified Login (Pulsar Identity + Orbit Suite Attribution)
-
-![Orbit Login](docs/screenshots/login.png)
-
-### Right-Click CS Chat Bubble -> Masukin Backlog (Orbit) & Push Modal
-
-| Right-Click Message Context Menu | Push Bug Modal (w/ Auto Attachment Carry-Over) |
-| --- | --- |
-| ![CS Inbox Right-Click Menu](docs/screenshots/cs-inbox-context-menu.png) | ![Push Bug to Orbit Backlog Modal](docs/screenshots/cs-inbox-bug-modal.png) |
-
-### Configurable Default Destination, Custom Theme Studio & 1x SSO Into Saturn Backlog
-
-| Orbit Destination Settings & Custom Theme Studio (Pulsar) | Saturn Backlog via 1x SSO (Floating Theme Dock & Switcher) |
-| --- | --- |
-| ![Orbit Integration Settings](docs/screenshots/orbit-settings.png) | ![Saturn Backlog SSO View](docs/screenshots/saturn-backlog-sso.png) |
-
----
-
-## Size & Architecture Comparison
-
-Measured directly on the compiled macOS `arm64` `--release` binaries, Rust source trees, and upstream metrics recorded in [`aphelion31/pulsar`](https://github.com/aphelion31/pulsar#readme) & [`aphelion31/saturn`](https://github.com/aphelion31/saturn#readme):
-
-| Dimension | Original Chatwoot + Plane | Separate Pulsar + Saturn | Unified Orbit (Single Binary) |
-| --- | --- | --- | --- |
-| **Backend source LOC** | `432,412` (`301,161` Chatwoot Ruby + `131,251` Plane Python/Live TS) | `90,487` (`52,605` Pulsar + `37,882` Saturn Rust `.rs` in Orbit crates) | `92,305` across `112` `.rs` files (`+1,818` LOC Orbit bridge) — **−78.7% (`4.7×` smaller than upstream)** |
-| **Compiled release binary** | Heavy Rails/Sidekiq + Django/Celery/Node images (`709 MB` Chatwoot Docker + `246 MiB` Plane `.venv`) | `47.2 MiB` total (`28.1 MiB` Pulsar + `19.1 MiB` Saturn) across 2 binaries | **`32.1 MiB`** (`33,660,224` bytes) single `orbit` binary — **−32% vs two separate binaries** |
-| **Frontend SPAs** | Vite/Vue (Chatwoot) + Next/RR + Node SSR/Live (Plane) | Static React Router bundles (`30 MiB` Pulsar w/ i18n + `61 MiB` Saturn web/admin/space) | Same static React Router SPAs served directly from `:3000` (zero Node runtime needed) |
-| **Runtime services** | Rails, Sidekiq, Django, Celery Worker/Beat, Node live, Caddy, MinIO, Redis, RabbitMQ, Postgres | `pulsar` + `saturn` + Postgres (2 app ports + webhook setup) | **2 processes (`orbit` binary + PostgreSQL)**, single port `:3000`, zero Redis/Sidekiq/RabbitMQ/MinIO |
-| **CS -> Backlog link** | External HTTP webhooks + separate credentials | External webhooks + separate logins | **In-process Rust bridge**, instant private-note sync, 1x SSO |
-| **Password hashing** | `bcrypt` (Chatwoot) + `pbkdf2_sha256` (Plane) | Upgraded in Orbit | **Argon2id** (`m=19456,t=2,p=1`) on both + seamless legacy upgrade on login |
-
----
+<div align="center">
 
 ## Quick Start
 
-### Option A: Docker Compose
+</div>
 
 ```bash
 cp .env.example .env
@@ -95,23 +52,10 @@ docker compose up --build -d
 
 - **Pulsar CS Desk:** `http://localhost:3000/app/`
 - **Saturn Project & Backlog:** `http://localhost:3000/` (`http://localhost:3000/god-mode/` admin, `/spaces/` boards)
-- Compose stack runs **`nginx` (`:3000 -> :80`) -> `axum` (`:3000`, `docker/axum/Dockerfile`) -> `postgres` (`pgvector/pgvector:pg17` with `docker/postgres/init-dbs.sql`)**, hardened with `read_only: true`, `cap_drop: [ALL]`, and `tmpfs` mounts.
-- For local `cargo run` development, use `docker compose -f docker-compose.dev.yaml up -d` for Postgres only.
+- Compose runs **`nginx` (`:3000 -> :80`) -> `axum` (`:3000`, [`docker/axum/Dockerfile`](docker/axum/Dockerfile)) -> `postgres` (`pgvector/pgvector:pg17` with [`docker/postgres/init-dbs.sql`](docker/postgres/init-dbs.sql))**, hardened with `read_only: true`, `cap_drop: [ALL]`, and `tmpfs` mounts.
 
-### Option C: Syncing New Features from Pulsar & Saturn
-
-```bash
-# Preview changes in sibling ../pulsar and ../saturn checkouts
-./scripts/sync-upstream.sh --check
-
-# Apply 3-way merge, preserve Orbit overlays, verify build + tests + smoke.sh
-./scripts/sync-upstream.sh
-
-# Or fetch remote GitHub repos (used by .github/workflows/sync-upstream.yml every 6h)
-./scripts/sync-upstream.sh --remote
-```
-
-### Option B: Local Development
+<details>
+<summary><strong>Local Bare-Metal Development &amp; Environment Variables</strong></summary>
 
 ```bash
 # 1. Create both PostgreSQL databases (Pulsar requires pgvector extension)
@@ -129,9 +73,7 @@ cargo run --release -- seed admin@orbit.local 'Change-me-2026' OrbitCo
 cargo run --release
 ```
 
----
-
-## Environment Variables
+For Postgres-only local development, use `docker compose -f docker-compose.dev.yaml up -d`.
 
 | Env | Default | Purpose |
 | --- | --- | --- |
@@ -145,12 +87,112 @@ cargo run --release
 | `PULSAR_STORAGE_DIR` | `storage/pulsar` | Pulsar media & upload storage |
 | `SATURN_STORAGE_DIR` | `storage/saturn` | Saturn work-item asset storage |
 
+</details>
+
 ---
 
-## Documentation & Git Workflow
+<div align="center">
 
-- Architecture & design specs: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- Git hooks & PR rules (`OBT-NNN/<type>-<description>`, `develop` & `master`): [`docs/github/`](docs/github/)
+## Benchmarks &amp; Footprint
+
+</div>
+
+Measured directly on the compiled macOS `arm64` `--release` binaries, Rust source trees, and upstream metrics recorded in [`aphelion31/pulsar`](https://github.com/aphelion31/pulsar#readme) &amp; [`aphelion31/saturn`](https://github.com/aphelion31/saturn#readme):
+
+### Codebase &amp; Binary Size
+
+| Dimension | Original Chatwoot + Plane | Separate Pulsar + Saturn | Unified Orbit (Single Binary) |
+| --- | --- | --- | --- |
+| **Backend source LOC** | `432,412` (`301,161` Ruby + `131,251` Python/TS) | `90,487` (`52,605` Pulsar + `37,882` Saturn) | **`92,305`** across `112` `.rs` files (**4.7× smaller than upstream**) |
+| **Compiled release binary** | `709 MB` Chatwoot Docker + `246 MiB` Plane `.venv` | `47.2 MiB` (`28.1 MiB` + `19.1 MiB`) | **`32.1 MiB`** single `orbit` binary (**−32% vs separate**) |
+| **Frontend SPAs** | Vite/Vue + Next/RR + Node SSR/Live | Static React Router (`30 MiB` + `61 MiB`) | Same static SPAs on `:3000` (**zero Node runtime**) |
+
+### Runtime &amp; Integration Overhead
+
+| Dimension | Original Chatwoot + Plane | Separate Pulsar + Saturn | Unified Orbit |
+| --- | --- | --- | --- |
+| **Runtime processes** | Rails, Sidekiq, Django, Celery, Node live, Caddy, MinIO, Redis, RabbitMQ, Postgres | `pulsar` + `saturn` + Postgres (2 app ports) | **2 processes (`orbit` + PostgreSQL)** on `:3000` |
+| **CS -> Backlog link** | External HTTP webhooks + separate credentials | External webhooks + separate logins | **In-process Rust bridge**, instant private-note sync, 1x SSO |
+| **Password hashing** | `bcrypt` + `pbkdf2_sha256` | Upgraded in Orbit | **Argon2id** (`m=19456,t=2,p=1`) + seamless legacy upgrade |
+
+---
+
+<div align="center">
+
+## Screenshots
+
+Captured headlessly against a live **Orbit** server connected to PostgreSQL (**zero console/hydration errors, zero failed HTTP requests**).
+
+<table>
+  <tr>
+    <td align="center"><a href="docs/screenshots/login.png"><img src="docs/screenshots/login.png" alt="Orbit Unified Login with Orbit Blue default" width="440" /></a><br>1x Unified Login (Orbit Blue <code>#2781F6</code>)</td>
+    <td align="center"><a href="docs/screenshots/cs-inbox-context-menu.png"><img src="docs/screenshots/cs-inbox-context-menu.png" alt="Right-click CS message bubble Masukin Backlog Orbit" width="440" /></a><br>Right-Click Chat -> <code>Masukin Backlog (Orbit)</code></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="docs/screenshots/cs-inbox-bug-modal.png"><img src="docs/screenshots/cs-inbox-bug-modal.png" alt="Push Bug to Orbit Backlog modal with automatic attachment carry-over" width="440" /></a><br>Push Bug Modal (Auto Attachment Carry-Over)</td>
+    <td align="center"><a href="docs/screenshots/orbit-settings.png"><img src="docs/screenshots/orbit-settings.png" alt="Orbit Backlog destination settings and Custom Theme Studio" width="440" /></a><br>Destination Settings &amp; Custom Theme Studio</td>
+  </tr>
+</table>
+
+<a href="docs/screenshots/saturn-backlog-sso.png">
+  <img src="docs/screenshots/saturn-backlog-sso.png" alt="Saturn Backlog issue view reached via 1x SSO with carried-over attachment and floating Theme dock" width="892" />
+</a>
+<br>
+<em>Saturn Backlog via 1x SSO (Linked CS Issue + Attachment + Floating Theme Dock)</em>
+
+</div>
+
+---
+
+## CS-to-Backlog Bridge
+
+Right-click any customer message bubble in **Pulsar CS Desk** (or click the hover bug icon / right sidebar action) and choose **`Masukin Backlog (Orbit)`**. The modal pre-fills title, customer contact context, message text, and conversation link, then pushes either to a configurable **Todo / Board State** or Saturn's **Intake (Triage)** queue.
+
+Attachments on the CS message (screenshots, logs) copy from Pulsar storage into Saturn's `file_assets` table &amp; disk storage (`include_attachments: true`). When a linked Saturn issue changes state (e.g. `Backlog` -> `Done`), Saturn's in-process `InternalEvent` bus automatically posts an internal **private note** back into the Pulsar conversation — no external webhooks required.
+
+## 1x Unified SSO &amp; Argon2id Security
+
+Signing into Pulsar automatically issues a Saturn `session-id` cookie (`/api/v1/orbit/auth/sync_saturn`); signing into Saturn exchanges into Pulsar devise headers (`/api/v1/orbit/auth/exchange_saturn`); unified sign-out clears both. Jump between **Saturn Backlog ↗** (`/`) and **Pulsar CS Desk ↗** (`/app/`) on the same origin without logging in twice.
+
+Both engines hash credentials with **Argon2id** (`m=19456,t=2,p=1`): Pulsar hashes login passwords and devise tokens (`$argon2id$...`), while Saturn uses Django-compatible `argon2$argon2id$v=19$...` with constant-time dummy verification (`verify_dummy_async`). Legacy Chatwoot (`bcrypt`) and Plane/Django (`pbkdf2_sha256`) hashes verify cleanly and upgrade automatically on login.
+
+## Custom Theme Engine
+
+Orbit defaults to **Orbit Blue (`#2781F6`)** across both **Pulsar CS Desk (`/app/*`)** and **Saturn Backlog (`/`, `/god-mode/`, `/spaces/`)**, and lets teams customize the entire suite live:
+
+- **8 curated presets** (`Orbit Blue`, `Royal Indigo`, `Cosmic Violet`, `Emerald`, `Ocean Teal`, `Crimson Rose`, `Sunset Amber`, `Graphite`), custom `#RRGGBB` accent picker, optional surface tint, Light/Dark/System mode, and corner radius (`Sharp` / `Default` / `Rounded`).
+- **Dynamic component cascade**: Tailwind v4 CSS variables (`--blue-1..12`, `--color-n-brand`, `--color-accent`, `--orbit-brand-ink`) and Saturn's `--brand-*` tokens update buttons, chat bubbles, badges, focus rings, logos, charts, links, and Saturn's floating dock in real time with WCAG contrast-aware text.
+- **Cross-app persistence**: stored via `GET/PUT /api/v1/orbit/theme` (accepting Pulsar headers or Saturn cookie), served to Saturn via `GET /api/v1/orbit/theme.js`, and editable from **Orbit Settings**, **Sidebar Profile Menu**, **`⌘K` Appearance**, or Saturn's floating **Theme** dock.
+
+## Automated Upstream Sync
+
+Pull new features and fixes from **Pulsar** and **Saturn** anytime locally or via [`.github/workflows/sync-upstream.yml`](.github/workflows/sync-upstream.yml) (runs every 6 hours or on `repository_dispatch`) using `git merge-file` 3-way merging + Orbit feature safety guards, keeping `Masukin Backlog (Orbit)`, 1x SSO, and Orbit Theme overlays intact:
+
+```bash
+./scripts/sync-upstream.sh --check   # preview upstream changes
+./scripts/sync-upstream.sh           # 3-way merge + build + tests + smoke.sh
+./scripts/sync-upstream.sh --remote  # fetch directly from GitHub upstream repos
+```
+
+---
+
+<div align="center">
+
+## Star History
+
+<a href="https://github.com/aphelion31/orbit/stargazers">
+  <img src="docs/images/star-history.svg" alt="Orbit cumulative GitHub stars over time" width="800">
+</a>
+
+<p><em>Updated automatically by <code>github-actions[bot]</code> via <a href=".github/workflows/update-star-history.yml"><code>update-star-history.yml</code></a> (zero external cost).</em></p>
+
+</div>
+
+---
+
+## Documentation &amp; Verification
+
+- Full documentation index: [`docs/README.md`](docs/README.md) · Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · Git &amp; PR rules: [`docs/github/`](docs/github/)
 - Setup repo hooks after cloning:
 
 ```bash
@@ -158,23 +200,18 @@ git config core.hooksPath .githooks
 scripts/new-branch.sh feat-my-change   # cuts OBT-NNN/feat-my-change from origin/develop
 ```
 
----
-
-## Verification
-
-Latest test & E2E verification run across the entire workspace:
+Verified across the workspace:
 
 ```bash
-cargo test --workspace       # orbit: 1 passed | pulsar: 53 passed, 1 ignored | saturn: 52 passed
-./tools/smoke.sh             # ORBIT SMOKE OK (API, SSO, Argon2id hashes, live sync, attachment download)
-./tools/e2e-screenshots.sh   # ALL SCREENSHOTS & E2E CHECKS PASSED WITH ZERO ERRORS (Chromium + 5 PNGs)
+cargo test --workspace       # orbit: 4 passed | pulsar: 53 passed, 1 ignored | saturn: 52 passed
+./tools/smoke.sh             # ORBIT SMOKE OK (API, SSO, Argon2id, theme API, live sync, attachments)
+./tools/e2e-screenshots.sh   # ALL SCREENSHOTS & E2E CHECKS PASSED WITH ZERO ERRORS (5 PNGs)
+./tools/record-demo.sh       # renders orbit-demo.mp4 & orbit-demo.gif via Playwright + ffmpeg
 ```
 
----
-
-## License & Credits
+## License &amp; Credits
 
 Orbit combines two components:
-- `crates/pulsar` & `web/pulsar` are licensed under **MIT** (see [`LICENSE`](LICENSE) and [`LICENSE-CHATWOOT`](LICENSE-CHATWOOT)).
-- `crates/saturn` & `web/saturn` are licensed under **AGPL-3.0-only** (see [`LICENSE-SATURN`](LICENSE-SATURN)).
-- When distributing the unified binary/container, AGPL-3.0 obligations apply to the combined work alongside upstream Chatwoot MIT & Plane AGPL-3.0 notices.
+- `crates/pulsar` &amp; `web/pulsar` are licensed under **MIT** (see [`LICENSE`](LICENSE) and [`LICENSE-CHATWOOT`](LICENSE-CHATWOOT)).
+- `crates/saturn` &amp; `web/saturn` are licensed under **AGPL-3.0-only** (see [`LICENSE-SATURN`](LICENSE-SATURN)).
+- When distributing the unified binary/container, AGPL-3.0 obligations apply to the combined work alongside upstream Chatwoot MIT &amp; Plane AGPL-3.0 notices.
