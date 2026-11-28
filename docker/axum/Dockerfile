@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cmake make g++ pkg-config \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+ARG CARGO_BUILD_JOBS
+ENV CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS}
 COPY Cargo.toml Cargo.lock ./
 COPY crates crates
 RUN cargo build --release --locked --bin orbit

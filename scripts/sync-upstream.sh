@@ -42,8 +42,12 @@ lock = json.loads(LOCK_PATH.read_text())
 
 PROTECTED_ORBIT_ONLY = {
     "crates/pulsar/src/lib.rs",
+    "crates/pulsar/src/channels/whatsapp_web.rs",
+    "crates/pulsar/src/channels/whatsapp_web_store.rs",
+    "crates/pulsar/migrations/0009_whatsapp_web_store.sql",
     "crates/saturn/src/lib.rs",
     "web/pulsar/app/components/next/conversation/OrbitBugModal.tsx",
+    "web/pulsar/app/components/next/inbox/WhatsAppChannelSettings.tsx",
     "web/pulsar/app/components/next/OrbitThemeCard.tsx",
     "web/pulsar/app/lib/orbitTheme.ts",
     "web/pulsar/app/routes/settings/integrations/orbit.tsx",

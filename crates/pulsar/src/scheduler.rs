@@ -187,6 +187,24 @@ pub async fn dispatch_scheduled_campaigns(st: &AppState) -> anyhow::Result<()> {
         .await?
         .unwrap_or_default();
 
+        if crate::channels::whatsapp_web::is_wa_web_inbox(&st.db, inbox_id)
+            .await
+            .unwrap_or(false)
+        {
+            tracing::warn!(
+                campaign_id,
+                inbox_id,
+                "blocked scheduled campaign on WhatsApp QR inbox (anti-spam guard)"
+            );
+            sqlx::query(
+                "UPDATE campaigns SET enabled = false, campaign_status = 1, completed_at = now(), updated_at = now() WHERE id = $1",
+            )
+            .bind(campaign_id)
+            .execute(&st.db)
+            .await?;
+            continue;
+        }
+
         let label_ids: Vec<i64> = audience
             .as_array()
             .into_iter()

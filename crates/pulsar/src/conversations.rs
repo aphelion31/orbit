@@ -875,8 +875,8 @@ pub(crate) async fn emit_conv(st: &AppState, id: i64, event: &str) -> Result<Con
 
 /// 24-hour customer messaging window check for WhatsApp/Meta channels (Chatwoot `can_reply?`).
 pub(crate) async fn within_messaging_window(db: &PgPool, conv_id: i64) -> bool {
-    let row: Option<(String, Option<i32>)> = sqlx::query_as(
-        "SELECT i.channel_type, tw.medium
+    let row: Option<(i64, String, Option<i32>)> = sqlx::query_as(
+        "SELECT i.id::bigint, i.channel_type, tw.medium
          FROM conversations c
          JOIN inboxes i ON i.id = c.inbox_id
          LEFT JOIN channel_twilio_sms tw ON i.channel_type = 'Channel::TwilioSms' AND tw.id = i.channel_id
@@ -887,13 +887,15 @@ pub(crate) async fn within_messaging_window(db: &PgPool, conv_id: i64) -> bool {
     .await
     .ok()
     .flatten();
-    let Some((ch, tw_medium)) = row else {
+    let Some((inbox_id, ch, tw_medium)) = row else {
         return true;
     };
-    let is_windowed = matches!(
-        ch.as_str(),
-        "Channel::Whatsapp" | "Channel::FacebookPage" | "Channel::Instagram"
-    ) || (ch == "Channel::TwilioSms" && tw_medium == Some(1));
+    let is_windowed = matches!(ch.as_str(), "Channel::FacebookPage" | "Channel::Instagram")
+        || (ch == "Channel::Whatsapp"
+            && !crate::channels::whatsapp_web::is_wa_web_inbox(db, inbox_id)
+                .await
+                .unwrap_or(false))
+        || (ch == "Channel::TwilioSms" && tw_medium == Some(1));
     if !is_windowed {
         return true;
     }
@@ -2836,7 +2838,11 @@ async fn contact_info_request_show(
             .fetch_optional(&st.db)
             .await?
             .flatten();
-    if channel.as_deref() != Some("Channel::Whatsapp") {
+    if channel.as_deref() != Some("Channel::Whatsapp")
+        || crate::channels::whatsapp_web::is_wa_web_inbox(&st.db, c.inbox_id)
+            .await
+            .unwrap_or(false)
+    {
         return Ok(Json(
             json!({ "available": false, "reason": "unsupported_provider" }),
         ));
@@ -2901,7 +2907,9 @@ async fn request_contact_info(
             .fetch_optional(&st.db)
             .await?
             .flatten();
-    if channel.as_deref() != Some("Channel::Whatsapp") {
+    if channel.as_deref() != Some("Channel::Whatsapp")
+        || crate::channels::whatsapp_web::is_wa_web_inbox(&st.db, c.inbox_id).await?
+    {
         return Err(ApiError::bad("unsupported_provider"));
     }
     Err(ApiError::bad("outside_messaging_window"))

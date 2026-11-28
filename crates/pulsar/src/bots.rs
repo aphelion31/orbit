@@ -96,6 +96,11 @@ async fn campaign_validate(st: &AppState, account: i64, v: &Value) -> Result<(),
         .as_i64()
         .ok_or_else(|| ApiError::bad("inbox_id is required"))?;
     inbox_exists(st, account, inbox).await?;
+    if crate::channels::whatsapp_web::is_wa_web_inbox(&st.db, inbox).await? {
+        return Err(ApiError::bad(
+            "Mass broadcasts and campaigns are disabled for WhatsApp QR (Linked Device) inboxes to protect your number from bans. Switch this inbox to Meta WhatsApp Cloud API to run campaigns.",
+        ));
+    }
     if let Some(id) = v["sender_id"].as_i64() {
         let exists: bool = sqlx::query_scalar(
             "SELECT EXISTS(SELECT 1 FROM account_users WHERE account_id=$1 AND user_id=$2)",
