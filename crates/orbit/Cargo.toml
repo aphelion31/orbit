@@ -1,6 +1,6 @@
 [package]
 name = "orbit"
-version = "1.1.0"
+version = "1.2.0"
 edition = "2024"
 description = "Orbit: unified Pulsar (CS Desk) and Saturn (Project & Backlog) single-binary server"
 
