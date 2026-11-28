@@ -587,6 +587,10 @@ pub async fn migrate(db: &sqlx::PgPool) -> anyhow::Result<()> {
         .execute(db)
         .await
         .map_err(|e| anyhow::anyhow!("applying chatwoot 4.20 schema delta: {e}"))?;
+    sqlx::raw_sql(include_str!("../migrations/0009_whatsapp_web_store.sql"))
+        .execute(db)
+        .await
+        .map_err(|e| anyhow::anyhow!("creating pulsar_wa_web_kv: {e}"))?;
     Ok(())
 }
 
@@ -658,6 +662,7 @@ pub fn spawn_background(state: AppState) {
         ],
     );
     email_inbound::spawn(state.clone());
+    tokio::spawn(channels::whatsapp_web::restore_all(state.clone()));
     scheduler::spawn(state);
 }
 

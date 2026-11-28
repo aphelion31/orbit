@@ -21,6 +21,7 @@ type Campaign = {
 };
 
 type WaInbox = Inbox & {
+  provider?: string | null;
   message_templates?: Array<{ name: string; language: string; status?: string; components?: unknown[] }>;
 };
 
@@ -83,11 +84,12 @@ export default function WhatsAppCampaignsPage() {
       api<{ payload: WaInbox[] }>(`${base}/inboxes`),
       api<{ payload: Label[] } | Label[]>(`${base}/labels`),
     ]);
-    const inboxes = (inboxRes.payload || []).filter((i) => i.channel_type === "Channel::Whatsapp");
-    setWaInboxes(inboxes);
+    const allWa = (inboxRes.payload || []).filter((i) => i.channel_type === "Channel::Whatsapp");
+    const cloudWa = allWa.filter((i) => i.provider !== "whatsapp_web");
+    setWaInboxes(allWa);
     const lbls = Array.isArray(labelRes) ? labelRes : labelRes.payload || [];
     setLabels(lbls);
-    const waIds = new Set(inboxes.map((i) => i.id));
+    const waIds = new Set(allWa.map((i) => i.id));
     setCampaigns(
       allC.filter(
         (c) =>
@@ -95,8 +97,8 @@ export default function WhatsAppCampaignsPage() {
           (c.inbox?.channel_type === "Channel::Whatsapp" || (c.inbox?.id && waIds.has(c.inbox.id)))
       )
     );
-    if (!inboxId && inboxes.length > 0 && !isEdit) {
-      setInboxId(String(inboxes[0].id));
+    if (!inboxId && cloudWa.length > 0 && !isEdit) {
+      setInboxId(String(cloudWa[0].id));
     }
   }, [base, inboxId, isEdit]);
 
@@ -153,7 +155,9 @@ export default function WhatsAppCampaignsPage() {
     };
   }, [base, campaignId, isAnalytics, isEdit, loadAnalytics, loadList, page, statusFilter]);
 
-  const activeInbox = waInboxes.find((i) => String(i.id) === inboxId);
+  const cloudWaInboxes = waInboxes.filter((i) => i.provider !== "whatsapp_web");
+  const qrWaInboxes = waInboxes.filter((i) => i.provider === "whatsapp_web");
+  const activeInbox = cloudWaInboxes.find((i) => String(i.id) === inboxId);
   const templates = activeInbox?.message_templates || [];
 
   async function handleSave(e: React.FormEvent) {
@@ -335,13 +339,23 @@ export default function WhatsAppCampaignsPage() {
               onChange={(e) => setInboxId(e.target.value)}
               className="h-10 rounded-lg border border-n-weak bg-n-background px-3"
             >
-              <option value="">Select WhatsApp inbox</option>
-              {waInboxes.map((i) => (
+              <option value="">Select Meta Cloud WhatsApp inbox</option>
+              {cloudWaInboxes.map((i) => (
                 <option key={i.id} value={i.id}>
                   {i.name}
                 </option>
               ))}
             </select>
+            {qrWaInboxes.length > 0 && (
+              <span className="text-xs text-n-slate-11">
+                WhatsApp QR inboxes ({qrWaInboxes.map((i) => i.name).join(", ")}) are blocked from
+                mass broadcasts.{" "}
+                <Link to={`/accounts/${accountId}/settings/inboxes`} className="underline">
+                  Switch to Meta Cloud API
+                </Link>{" "}
+                to enable campaigns.
+              </span>
+            )}
           </label>
           {templates.length > 0 && (
             <label className="flex flex-col gap-1 text-sm">

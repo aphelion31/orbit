@@ -54,6 +54,7 @@ export PULSAR_WEB_DIR="$ROOT/web/pulsar/build/client"
 export SATURN_WEB_DIR="$ROOT/web/saturn"
 export PULSAR_STORAGE_DIR="$ROOT/storage/pulsar_smoke"
 export SATURN_STORAGE_DIR="$ROOT/storage/saturn_smoke"
+export WA_WEB_DISABLE_CONNECT=1
 
 if [[ -z "$ORBIT_BIN" ]]; then
   echo "==> Building orbit binary"
@@ -92,7 +93,8 @@ PY
 
 curl -sf "$BASE/app/" | grep -qi "<!doctype html" || fail "GET /app/ missing HTML"
 curl -sf "$BASE/" | grep -qi "Saturn" || fail "GET / missing Saturn HTML"
-curl -sf "$BASE/assets/entry.client-DGbjlsLU.js" | grep -q "Pulsar CS Desk" || fail "GET entry.client missing Pulsar CS Desk switcher"
+ENTRY_JS=$(basename "$(ls "$ROOT"/web/saturn/web/build/client/assets/entry.client-*.js | head -n 1)")
+curl -sf "$BASE/assets/$ENTRY_JS" | grep -q "Pulsar CS Desk" || fail "GET $ENTRY_JS missing Pulsar CS Desk switcher"
 curl -sf "$BASE/sdk.js" >/dev/null || fail "GET /sdk.js failed"
 echo "✔ SPAs (/app/, /) and /sdk.js OK"
 
@@ -343,6 +345,34 @@ curl -sf -b "$SSO_JAR" -c "$SSO_JAR" -X POST "$BASE/api/v1/orbit/auth/sign_out" 
 OUT_CODE=$(curl -s -b "$SSO_JAR" -o /dev/null -w '%{http_code}' "$BASE/api/users/me/")
 [[ "$OUT_CODE" == "401" || "$OUT_CODE" == "403" ]] || fail "Expected 401/403 after unified sign_out, got $OUT_CODE"
 echo "✔ Unified sign_out invalidated Saturn session ($OUT_CODE)"
+
+# Dual WhatsApp (WhatsApp Web QR + Anti-Spam Guardrails + Multi-account + Cloud Upgrade validation)
+WA1_JSON=$(curl -sf "${AUTH[@]}" -X POST "$PA/whatsapp/web/inboxes" -d '{"name":"WA Biasa 1"}')
+WA1=$(python3 -c '
+import sys, json
+d = json.loads(sys.argv[1])
+assert d["provider"] == "whatsapp_web", d
+assert d["session"]["state"] == "qr_ready", d
+assert d["session"]["anti_spam"]["broadcast_blocked"] is True, d
+assert d.get("phone_number") is None, d
+print(d["id"])
+' "$WA1_JSON")
+WA2=$(curl -sf "${AUTH[@]}" -X POST "$PA/whatsapp/web/inboxes" -d '{"name":"WA Biasa 2"}' | python3 -c 'import sys,json; d=json.load(sys.stdin); assert d["provider"]=="whatsapp_web"; print(d["id"])')
+curl -sf "${AUTH[@]}" "$PA/whatsapp/web/$WA1/status" | python3 -c '
+import sys, json
+d = json.load(sys.stdin)
+assert d["provider"] == "whatsapp_web", d
+assert d["anti_spam"]["max_outbound_per_minute"] == 15, d
+print("✔ Multi-account WA QR inboxes & status OK")'
+CAMP_CODE=$(curl -s "${AUTH[@]}" -o /dev/null -w '%{http_code}' -X POST "$PA/campaigns" -d "{\"title\":\"Spam Test\",\"message\":\"Hi\",\"inbox_id\":$WA1,\"audience\":[{\"id\":1,\"type\":\"Label\"}]}")
+[[ "$CAMP_CODE" == "422" ]] || fail "Expected 422 blocking broadcast campaign on whatsapp_web, got $CAMP_CODE"
+echo "✔ Anti-spam broadcast guardrail blocked campaign on whatsapp_web (422)"
+SWITCH_CODE=$(curl -s "${AUTH[@]}" -o /dev/null -w '%{http_code}' -X POST "$PA/whatsapp/web/$WA1/switch_to_cloud" -d '{}')
+[[ "$SWITCH_CODE" == "422" ]] || fail "Expected 422 on empty switch_to_cloud payload, got $SWITCH_CODE"
+curl -sf "${AUTH[@]}" -X POST "$PA/whatsapp/web/$WA1/logout" >/dev/null || fail "WA QR logout failed"
+curl -sf "${AUTH[@]}" -X DELETE "$PA/inboxes/$WA1" >/dev/null || fail "Delete WA1 failed"
+curl -sf "${AUTH[@]}" -X DELETE "$PA/inboxes/$WA2" >/dev/null || fail "Delete WA2 failed"
+echo "✔ WA QR logout, switch_to_cloud guard, and inbox cleanup OK"
 
 rm -f "$SSO_JAR" "$EX_HDR" "$PNG_TMP"
 rm -rf "$ROOT/storage/pulsar_smoke" "$ROOT/storage/saturn_smoke"

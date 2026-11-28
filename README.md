@@ -29,7 +29,7 @@
 </div>
 
 > **Attribution:** Orbit is not a hidden rebrand — it explicitly unifies two existing Rust rewrites into a single runtime while preserving both products' visual identities and database schemas:
-> - **Pulsar** (`crates/pulsar`, MIT — Rust + React Router rewrite of [Chatwoot](https://github.com/chatwoot/chatwoot) 4.20.1, Chatwoot © Chatwoot Inc.) mounted at **`/app/`**
+> - **Pulsar** (`crates/pulsar`, MIT — Rust + React Router rewrite of [Chatwoot](https://github.com/chatwoot/chatwoot) 4.20.1, Chatwoot © Chatwoot Inc.) mounted at **`/app/`** — includes **Dual WhatsApp channels** (native pure-Rust WhatsApp Web QR/Pair Code with built-in anti-spam/anti-broadcast guardrails + Meta WhatsApp Cloud API with lossless in-place upgrade)
 > - **Saturn** (`crates/saturn`, AGPL-3.0 — Rust + React Router rewrite of [Plane](https://github.com/makeplane/plane), Plane © Plane Software, Inc.) mounted at **`/`** (plus `/god-mode/` admin & `/spaces/` public boards)
 > - **Orbit Bridge** (`crates/orbit/`) connecting Pulsar and Saturn in-process on **one port (`:3000`)**
 

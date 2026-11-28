@@ -96,7 +96,18 @@ export default function InboxNewWizard() {
   const [bwApplicationId, setBwApplicationId] = useState("");
   const [bwApiKey, setBwApiKey] = useState("");
   const [bwApiSecret, setBwApiSecret] = useState("");
+  const [waProvider, setWaProvider] = useState<"whatsapp_web" | "whatsapp_cloud">("whatsapp_web");
   const [waMode, setWaMode] = useState<"manual" | "embedded">("manual");
+  const [waPairPhone, setWaPairPhone] = useState("");
+  const [waQrInboxId, setWaQrInboxId] = useState<number | null>(null);
+  const [waQrStatus, setWaQrStatus] = useState<{
+    state?: string;
+    connected?: boolean;
+    qr_svg?: string | null;
+    pair_code?: string | null;
+    phone_number?: string | null;
+    last_error?: string | null;
+  } | null>(null);
   const [waPhoneId, setWaPhoneId] = useState("");
   const [waWabaId, setWaWabaId] = useState("");
   const [waAccessToken, setWaAccessToken] = useState("");
@@ -289,6 +300,38 @@ export default function InboxNewWizard() {
     };
   }, [accountId, inbox_id, isFinish]);
 
+  // Poll WhatsApp QR pairing state after creating a whatsapp_web inbox
+  useEffect(() => {
+    if (!waQrInboxId) return;
+    let active = true;
+    const poll = () => {
+      api<{
+        state?: string;
+        connected?: boolean;
+        qr_svg?: string | null;
+        pair_code?: string | null;
+        phone_number?: string | null;
+        last_error?: string | null;
+      }>(`${acct(accountId)}/whatsapp/web/${waQrInboxId}/status`)
+        .then((st) => {
+          if (!active) return;
+          setWaQrStatus(st);
+          if (st.connected) {
+            navigate(`/accounts/${accountId}/settings/inboxes/new/${waQrInboxId}/agents`, {
+              replace: true,
+            });
+          }
+        })
+        .catch(() => {});
+    };
+    poll();
+    const timer = setInterval(poll, 2000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [accountId, navigate, waQrInboxId]);
+
   async function copyToClipboard(key: string, text: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -396,6 +439,21 @@ export default function InboxNewWizard() {
           },
         };
       } else if (sub_page === "whatsapp") {
+        if (waProvider === "whatsapp_web") {
+          const res = await api<Inbox & { session?: typeof waQrStatus }>(
+            `${acct(accountId)}/whatsapp/web/inboxes`,
+            {
+              method: "POST",
+              json: {
+                name: inboxName.trim() || "WhatsApp QR",
+                pair_phone: waPairPhone.trim() || undefined,
+              },
+            }
+          );
+          setWaQrInboxId(res.id);
+          setWaQrStatus(res.session ?? { state: "connecting" });
+          return;
+        }
         if (waMode === "embedded") {
           const res = await api<Inbox>(`${acct(accountId)}/whatsapp/authorization`, {
             method: "POST",
@@ -1000,58 +1058,185 @@ export default function InboxNewWizard() {
                   </form>
                 ) : sub_page === "whatsapp" ? (
                   <form onSubmit={handleCreateInbox} className="flex flex-col gap-4">
-                    <h2 className="text-xl font-medium text-n-slate-12">WhatsApp Cloud API</h2>
-                    <div className="flex gap-2">
-                      <Button outline slate sm type="button" onClick={() => setWaMode("manual")} label="Manual Setup" />
-                      <Button outline slate sm type="button" onClick={() => setWaMode("embedded")} label="Embedded Signup" />
+                    <h2 className="text-xl font-medium text-n-slate-12">WhatsApp</h2>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => setWaProvider("whatsapp_web")}
+                        className={`rounded-xl border p-3.5 text-left transition ${
+                          waProvider === "whatsapp_web"
+                            ? "border-n-brand bg-n-blue-2"
+                            : "border-n-weak bg-n-background"
+                        }`}
+                      >
+                        <div className="text-sm font-semibold text-n-slate-12">
+                          WhatsApp Biasa (Scan QR)
+                        </div>
+                        <div className="mt-1 text-xs text-n-slate-11">
+                          Tanpa akun Meta. Anti-broadcast/spam aktif otomatis, bisa banyak nomor &
+                          switch ke Cloud kapan saja.
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWaProvider("whatsapp_cloud");
+                          setWaQrInboxId(null);
+                        }}
+                        className={`rounded-xl border p-3.5 text-left transition ${
+                          waProvider === "whatsapp_cloud"
+                            ? "border-n-brand bg-n-blue-2"
+                            : "border-n-weak bg-n-background"
+                        }`}
+                      >
+                        <div className="text-sm font-semibold text-n-slate-12">
+                          Meta Cloud API (Official)
+                        </div>
+                        <div className="mt-1 text-xs text-n-slate-11">
+                          Resmi Meta WABA, support template &amp; WhatsApp Campaigns.
+                        </div>
+                      </button>
                     </div>
-                    {waMode === "embedded" ? (
-                      <>
-                        <input required value={waCode} onChange={(e) => setWaCode(e.target.value)} placeholder="OAuth authorization code" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
-                        <input required value={waWabaId} onChange={(e) => setWaWabaId(e.target.value)} placeholder="WABA ID" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
-                        <input value={waPhoneId} onChange={(e) => setWaPhoneId(e.target.value)} placeholder="Phone Number ID (optional)" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
-                      </>
+
+                    {waProvider === "whatsapp_web" ? (
+                      waQrInboxId ? (
+                        <div className="flex flex-col items-center gap-4 rounded-xl border border-n-weak bg-n-solid-1 p-6">
+                          <div className="text-sm font-medium text-n-slate-12">
+                            Scan QR di WhatsApp → Linked Devices
+                          </div>
+                          <div className="rounded-xl border border-n-weak bg-white p-4">
+                            {waQrStatus?.qr_svg ? (
+                              <img
+                                src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+                                  waQrStatus.qr_svg
+                                )}`}
+                                alt="WhatsApp QR Code"
+                                className="h-56 w-56"
+                              />
+                            ) : (
+                              <div className="flex h-56 w-56 items-center justify-center text-xs text-n-slate-11">
+                                Generating QR code...
+                              </div>
+                            )}
+                          </div>
+                          {waQrStatus?.pair_code && (
+                            <div className="rounded-lg border border-n-brand bg-n-blue-2 px-4 py-2 font-mono text-lg font-semibold tracking-widest text-n-blue-11">
+                              {waQrStatus.pair_code}
+                            </div>
+                          )}
+                          {waQrStatus?.last_error && (
+                            <p className="text-xs text-n-ruby-11">{waQrStatus.last_error}</p>
+                          )}
+                          <div className="flex gap-2">
+                            <Button
+                              outline
+                              slate
+                              sm
+                              type="button"
+                              onClick={async () => {
+                                const st = await api<typeof waQrStatus>(
+                                  `${acct(accountId)}/whatsapp/web/${waQrInboxId}/reconnect`,
+                                  { method: "POST", json: {} }
+                                );
+                                setWaQrStatus(st);
+                              }}
+                              label="Refresh QR"
+                            />
+                            <Button
+                              solid
+                              blue
+                              sm
+                              type="button"
+                              onClick={() =>
+                                navigate(
+                                  `/accounts/${accountId}/settings/inboxes/new/${waQrInboxId}/agents`,
+                                  { replace: true }
+                                )
+                              }
+                              label="Continue to Add Agents"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <input
+                            value={inboxName}
+                            onChange={(e) => setInboxName(e.target.value)}
+                            placeholder="Inbox name (e.g. CS WhatsApp 1)"
+                            className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm"
+                          />
+                          <input
+                            value={waPairPhone}
+                            onChange={(e) => setWaPairPhone(e.target.value)}
+                            placeholder="Phone number for 8-digit pair code (optional, e.g. 6281234567890)"
+                            className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono"
+                          />
+                          <div className="rounded-lg border border-n-weak bg-n-solid-1 p-3 text-xs text-n-slate-11">
+                            <strong>Anti-Spam Guardrail:</strong> WhatsApp QR tidak bisa dipakai
+                            broadcast massal/campaigns dan dibatasi rate-limit aman (15 msg/menit,
+                            120 msg/jam, max 5 cold chat/jam). Anda bisa tambah banyak akun WA atau
+                            switch ke Meta Cloud API kapan saja.
+                          </div>
+                          <div className="flex justify-end">
+                            <Button solid blue type="submit" isLoading={loading} label="Generate QR Code" />
+                          </div>
+                        </>
+                      )
                     ) : (
                       <>
-                        <input value={inboxName} onChange={(e) => setInboxName(e.target.value)} placeholder="Inbox name (optional)" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm" />
-                        <input required value={waWabaId} onChange={(e) => setWaWabaId(e.target.value)} placeholder="WhatsApp Business Account ID (WABA ID)" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
-                        <input required value={waPhoneId} onChange={(e) => setWaPhoneId(e.target.value)} placeholder="Phone Number ID" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
-                        <input required value={waAccessToken} onChange={(e) => setWaAccessToken(e.target.value)} placeholder="Permanent Access Token" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
-                        <input value={waAppSecret} onChange={(e) => setWaAppSecret(e.target.value)} placeholder="App Secret" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
-                        {waPreview && (
-                          <div className="rounded-lg border border-n-teal-6 bg-n-teal-2 p-3 text-xs text-n-teal-11">
-                            Verified: {waPreview.display_phone_number} ({waPreview.suggested_inbox_name})
-                          </div>
+                        <div className="flex gap-2">
+                          <Button outline slate sm type="button" onClick={() => setWaMode("manual")} label="Manual Setup" />
+                          <Button outline slate sm type="button" onClick={() => setWaMode("embedded")} label="Embedded Signup" />
+                        </div>
+                        {waMode === "embedded" ? (
+                          <>
+                            <input required value={waCode} onChange={(e) => setWaCode(e.target.value)} placeholder="OAuth authorization code" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
+                            <input required value={waWabaId} onChange={(e) => setWaWabaId(e.target.value)} placeholder="WABA ID" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
+                            <input value={waPhoneId} onChange={(e) => setWaPhoneId(e.target.value)} placeholder="Phone Number ID (optional)" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
+                          </>
+                        ) : (
+                          <>
+                            <input value={inboxName} onChange={(e) => setInboxName(e.target.value)} placeholder="Inbox name (optional)" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm" />
+                            <input required value={waWabaId} onChange={(e) => setWaWabaId(e.target.value)} placeholder="WhatsApp Business Account ID (WABA ID)" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
+                            <input required value={waPhoneId} onChange={(e) => setWaPhoneId(e.target.value)} placeholder="Phone Number ID" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
+                            <input required value={waAccessToken} onChange={(e) => setWaAccessToken(e.target.value)} placeholder="Permanent Access Token" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
+                            <input value={waAppSecret} onChange={(e) => setWaAppSecret(e.target.value)} placeholder="App Secret" className="h-10 rounded-lg border border-n-weak bg-n-background px-3 text-sm font-mono" />
+                            {waPreview && (
+                              <div className="rounded-lg border border-n-teal-6 bg-n-teal-2 p-3 text-xs text-n-teal-11">
+                                Verified: {waPreview.display_phone_number} ({waPreview.suggested_inbox_name})
+                              </div>
+                            )}
+                          </>
                         )}
+                        <div className="flex justify-end gap-2">
+                          {waMode === "manual" && (
+                            <Button
+                              outline
+                              slate
+                              type="button"
+                              onClick={async () => {
+                                setError("");
+                                try {
+                                  const prev = await api<{ suggested_inbox_name?: string; display_phone_number?: string }>(
+                                    `${acct(accountId)}/whatsapp/manual/preview`,
+                                    {
+                                      method: "POST",
+                                      json: { waba_id: waWabaId.trim(), phone_number_id: waPhoneId.trim(), access_token: waAccessToken.trim() },
+                                    }
+                                  );
+                                  setWaPreview(prev);
+                                  if (!inboxName && prev.suggested_inbox_name) setInboxName(prev.suggested_inbox_name);
+                                } catch (err) {
+                                  setError(err instanceof Error ? err.message : "Validation failed");
+                                }
+                              }}
+                              label="Preview & Verify"
+                            />
+                          )}
+                          <Button solid blue type="submit" isLoading={loading} label="Connect WhatsApp" />
+                        </div>
                       </>
                     )}
-                    <div className="flex justify-end gap-2">
-                      {waMode === "manual" && (
-                        <Button
-                          outline
-                          slate
-                          type="button"
-                          onClick={async () => {
-                            setError("");
-                            try {
-                              const prev = await api<{ suggested_inbox_name?: string; display_phone_number?: string }>(
-                                `${acct(accountId)}/whatsapp/manual/preview`,
-                                {
-                                  method: "POST",
-                                  json: { waba_id: waWabaId.trim(), phone_number_id: waPhoneId.trim(), access_token: waAccessToken.trim() },
-                                }
-                              );
-                              setWaPreview(prev);
-                              if (!inboxName && prev.suggested_inbox_name) setInboxName(prev.suggested_inbox_name);
-                            } catch (err) {
-                              setError(err instanceof Error ? err.message : "Validation failed");
-                            }
-                          }}
-                          label="Preview & Verify"
-                        />
-                      )}
-                      <Button solid blue type="submit" isLoading={loading} label="Connect WhatsApp" />
-                    </div>
                   </form>
                 ) : sub_page === "facebook" ? (
                   <form onSubmit={handleCreateInbox} className="flex flex-col gap-4">
