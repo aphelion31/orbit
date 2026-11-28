@@ -71,6 +71,14 @@ pub fn account_routes() -> Router<AppState> {
             "/whatsapp/manual/{inbox_id}/setup_webhook",
             post(manual_setup_webhook),
         )
+        .route("/whatsapp/web/inboxes", post(web_create_inbox))
+        .route("/whatsapp/web/{inbox_id}/status", get(web_status))
+        .route("/whatsapp/web/{inbox_id}/reconnect", post(web_reconnect))
+        .route("/whatsapp/web/{inbox_id}/logout", post(web_logout))
+        .route(
+            "/whatsapp/web/{inbox_id}/switch_to_cloud",
+            post(web_switch_to_cloud),
+        )
 }
 async fn create(
     State(st): State<AppState>,
@@ -470,7 +478,43 @@ async fn send_outbound(st: &AppState, ev: &Event) -> anyhow::Result<()> {
     let Some(id) = ev.data["id"].as_i64() else {
         return Ok(());
     };
-    let Some(row) = sqlx::query("SELECT m.content, m.content_attributes, m.additional_attributes, ci.source_id, w.provider_config FROM messages m JOIN conversations c ON c.id = m.conversation_id AND c.account_id = m.account_id JOIN contact_inboxes ci ON ci.id = c.contact_inbox_id JOIN inboxes i ON i.id = c.inbox_id AND i.account_id = c.account_id AND i.channel_type = 'Channel::Whatsapp' JOIN channel_whatsapp w ON w.id = i.channel_id AND w.account_id = i.account_id AND w.provider = 'whatsapp_cloud' WHERE m.id = $1 AND m.account_id = $2 AND m.message_type = 1 AND NOT COALESCE(m.private, false)").bind(id).bind(ev.account_id).fetch_optional(&st.db).await? else { return Ok(()) };
+    let Some(row) = sqlx::query(
+        "SELECT m.content, m.content_attributes, m.additional_attributes, ci.source_id,
+                w.id::bigint AS channel_id, w.provider, w.provider_config,
+                i.id::bigint AS inbox_id, c.id::bigint AS conv_id
+         FROM messages m
+         JOIN conversations c ON c.id = m.conversation_id AND c.account_id = m.account_id
+         JOIN contact_inboxes ci ON ci.id = c.contact_inbox_id
+         JOIN inboxes i ON i.id = c.inbox_id AND i.account_id = c.account_id AND i.channel_type = 'Channel::Whatsapp'
+         JOIN channel_whatsapp w ON w.id = i.channel_id AND w.account_id = i.account_id
+         WHERE m.id = $1 AND m.account_id = $2 AND m.message_type = 1 AND NOT COALESCE(m.private, false)",
+    )
+    .bind(id)
+    .bind(ev.account_id)
+    .fetch_optional(&st.db)
+    .await? else {
+        return Ok(());
+    };
+
+    let provider: String = row.try_get("provider")?;
+    if provider == super::whatsapp_web::PROVIDER_WEB {
+        let channel_id: i64 = row.try_get("channel_id")?;
+        let inbox_id: i64 = row.try_get("inbox_id")?;
+        let conv_id: i64 = row.try_get("conv_id")?;
+        return super::whatsapp_web::send_outbound(
+            st,
+            channel_id,
+            inbox_id,
+            conv_id,
+            id,
+            ev.account_id,
+            &row,
+        )
+        .await;
+    }
+    if provider != "whatsapp_cloud" {
+        return Ok(());
+    }
     let cfg: Value = row.try_get("provider_config")?;
     let phone = cfg["phone_number_id"].as_str().unwrap_or("");
     let token = cfg["api_key"].as_str().unwrap_or("");
@@ -615,6 +659,7 @@ async fn validate_manual_setup(
     waba_id: &str,
     phone_number_id: &str,
     access_token: &str,
+    exclude_channel_id: Option<i64>,
 ) -> Result<Value, ApiError> {
     if waba_id.trim().is_empty() {
         return Err(ApiError::bad("WABA ID is required"));
@@ -670,20 +715,23 @@ async fn validate_manual_setup(
         .as_str()
         .unwrap_or_default();
     let phone_number = normalize_phone_plus(display_phone);
-    let dup_phone: bool =
-        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM channel_whatsapp WHERE phone_number = $1)")
-            .bind(&phone_number)
-            .fetch_one(db)
-            .await?;
+    let dup_phone: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM channel_whatsapp WHERE phone_number = $1 AND ($2::bigint IS NULL OR id::bigint <> $2))",
+    )
+    .bind(&phone_number)
+    .bind(exclude_channel_id)
+    .fetch_one(db)
+    .await?;
     if dup_phone {
         return Err(ApiError::bad(
             "This WhatsApp number is already connected to another inbox.",
         ));
     }
     let dup_pid: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM channel_whatsapp WHERE provider_config->>'phone_number_id' = $1)",
+        "SELECT EXISTS(SELECT 1 FROM channel_whatsapp WHERE provider_config->>'phone_number_id' = $1 AND ($2::bigint IS NULL OR id::bigint <> $2))",
     )
     .bind(phone_number_id)
+    .bind(exclude_channel_id)
     .fetch_one(db)
     .await?;
     if dup_pid {
@@ -915,7 +963,7 @@ async fn manual_preview(
     let phone_number_id = body["phone_number_id"].as_str().unwrap_or("");
     let access_token = body["access_token"].as_str().unwrap_or("");
     Ok(Json(
-        validate_manual_setup(&st.db, waba_id, phone_number_id, access_token).await?,
+        validate_manual_setup(&st.db, waba_id, phone_number_id, access_token, None).await?,
     ))
 }
 
@@ -933,7 +981,8 @@ async fn manual_connect(
     let phone_number_id = body["phone_number_id"].as_str().unwrap_or("");
     let access_token = body["access_token"].as_str().unwrap_or("");
     let app_secret = body["app_secret"].as_str().unwrap_or("");
-    let preview = validate_manual_setup(&st.db, waba_id, phone_number_id, access_token).await?;
+    let preview =
+        validate_manual_setup(&st.db, waba_id, phone_number_id, access_token, None).await?;
     let phone_number = preview["display_phone_number"].as_str().unwrap_or("");
     let inbox_name = body["inbox_name"]
         .as_str()
@@ -1118,6 +1167,274 @@ async fn manual_setup_webhook(
     Ok(Json(
         fetch_manual_webhook_status(&st.frontend_url, &phone, &cfg).await?,
     ))
+}
+
+async fn load_wa_web_inbox(
+    db: &PgPool,
+    account_id: i64,
+    inbox_id: i64,
+) -> Result<(i64, String, Value), ApiError> {
+    let row = sqlx::query(
+        "SELECT w.id::bigint AS channel_id, w.provider, w.phone_number, w.provider_config
+         FROM inboxes i
+         JOIN channel_whatsapp w ON w.id = i.channel_id AND w.account_id = i.account_id
+         WHERE i.id::bigint = $1 AND i.account_id::bigint = $2 AND i.channel_type = 'Channel::Whatsapp'",
+    )
+    .bind(inbox_id)
+    .bind(account_id)
+    .fetch_optional(db)
+    .await?
+    .ok_or_else(ApiError::not_found)?;
+    let provider: String = row.try_get("provider")?;
+    if provider != super::whatsapp_web::PROVIDER_WEB {
+        return Err(ApiError::bad(
+            "This inbox is already using Meta WhatsApp Cloud API",
+        ));
+    }
+    Ok((
+        row.try_get("channel_id")?,
+        row.try_get("phone_number")?,
+        row.try_get("provider_config")?,
+    ))
+}
+
+fn web_status_json(
+    inbox_id: i64,
+    channel_id: i64,
+    db_phone: &str,
+    snap: &super::whatsapp_web::SessionSnapshot,
+) -> Value {
+    let phone = snap
+        .phone_number
+        .clone()
+        .or_else(|| (!super::whatsapp_web::is_pending_phone(db_phone)).then(|| db_phone.to_string()));
+    json!({
+        "inbox_id": inbox_id,
+        "channel_id": channel_id,
+        "provider": super::whatsapp_web::PROVIDER_WEB,
+        "state": snap.state,
+        "connected": snap.state == "connected",
+        "qr_code": snap.qr_code,
+        "qr_svg": snap.qr_svg,
+        "qr_expires_at": snap.qr_expires_at,
+        "pair_code": snap.pair_code,
+        "phone_number": phone,
+        "push_name": snap.push_name,
+        "last_error": snap.last_error,
+        "anti_spam": super::whatsapp_web::anti_spam_policy_json(),
+    })
+}
+
+/// POST /whatsapp/web/inboxes
+async fn web_create_inbox(
+    State(st): State<AppState>,
+    user: CurrentUser,
+    Path(account_id): Path<i64>,
+    Json(body): Json<Value>,
+) -> Result<(StatusCode, Json<Value>), ApiError> {
+    require_account(&st.db, &user, account_id)
+        .await?
+        .require_admin()?;
+    let inbox_name = body["name"]
+        .as_str()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .unwrap_or("WhatsApp QR");
+    let pair_phone = body["pair_phone"]
+        .as_str()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_string);
+    let pending_phone = format!("qr-pending-{}", uuid::Uuid::new_v4().simple());
+    let cfg = json!({
+        "source": "whatsapp_web_qr",
+        "connected": false,
+        "anti_spam": super::whatsapp_web::anti_spam_policy_json(),
+    });
+
+    let mut tx = st.db.begin().await?;
+    let ch_id: i64 = sqlx::query_scalar(
+        "INSERT INTO channel_whatsapp (account_id, phone_number, provider, provider_config, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, now(), now()) RETURNING id::bigint",
+    )
+    .bind(account_id as i32)
+    .bind(&pending_phone)
+    .bind(super::whatsapp_web::PROVIDER_WEB)
+    .bind(&cfg)
+    .fetch_one(&mut *tx)
+    .await?;
+    let inbox_id: i64 = sqlx::query_scalar(
+        "INSERT INTO inboxes (channel_id, account_id, name, channel_type, created_at, updated_at)
+         VALUES ($1, $2, $3, 'Channel::Whatsapp', now(), now()) RETURNING id::bigint",
+    )
+    .bind(ch_id)
+    .bind(account_id)
+    .bind(inbox_name)
+    .fetch_one(&mut *tx)
+    .await?;
+    sqlx::query(
+        "INSERT INTO inbox_members (user_id, inbox_id, created_at, updated_at) VALUES ($1, $2, now(), now())",
+    )
+    .bind(user.id)
+    .bind(inbox_id)
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    st.hub.invalidate_cache(account_id, "inbox");
+
+    if let Err(e) =
+        super::whatsapp_web::start_session(st.clone(), ch_id, inbox_id, account_id, pair_phone)
+            .await
+    {
+        tracing::warn!(error = %e, ch_id, "failed to start WA QR session");
+    }
+
+    let snap = super::whatsapp_web::snapshot_for(ch_id).await;
+    let mut result = crate::inboxes::inbox_json(&st.db, account_id, inbox_id, true).await?;
+    result["session"] = web_status_json(inbox_id, ch_id, &pending_phone, &snap);
+    result["anti_spam"] = super::whatsapp_web::anti_spam_policy_json();
+    Ok((StatusCode::CREATED, Json(result)))
+}
+
+/// GET /whatsapp/web/{inbox_id}/status
+async fn web_status(
+    State(st): State<AppState>,
+    user: CurrentUser,
+    Path((account_id, inbox_id)): Path<(i64, i64)>,
+) -> ApiResult {
+    require_account(&st.db, &user, account_id)
+        .await?
+        .require_admin()?;
+    let (ch_id, db_phone, _cfg) = load_wa_web_inbox(&st.db, account_id, inbox_id).await?;
+    let snap = super::whatsapp_web::snapshot_for(ch_id).await;
+    Ok(Json(web_status_json(inbox_id, ch_id, &db_phone, &snap)))
+}
+
+/// POST /whatsapp/web/{inbox_id}/reconnect
+async fn web_reconnect(
+    State(st): State<AppState>,
+    user: CurrentUser,
+    Path((account_id, inbox_id)): Path<(i64, i64)>,
+    body: Option<Json<Value>>,
+) -> ApiResult {
+    require_account(&st.db, &user, account_id)
+        .await?
+        .require_admin()?;
+    let (ch_id, db_phone, _cfg) = load_wa_web_inbox(&st.db, account_id, inbox_id).await?;
+    let pair_phone = body
+        .and_then(|Json(v)| v["pair_phone"].as_str().map(str::trim).map(str::to_string))
+        .filter(|s| !s.is_empty());
+    super::whatsapp_web::start_session(st.clone(), ch_id, inbox_id, account_id, pair_phone)
+        .await
+        .map_err(|e| ApiError::bad(format!("Reconnect failed: {e}")))?;
+    let snap = super::whatsapp_web::snapshot_for(ch_id).await;
+    Ok(Json(web_status_json(inbox_id, ch_id, &db_phone, &snap)))
+}
+
+/// POST /whatsapp/web/{inbox_id}/logout
+async fn web_logout(
+    State(st): State<AppState>,
+    user: CurrentUser,
+    Path((account_id, inbox_id)): Path<(i64, i64)>,
+) -> ApiResult {
+    require_account(&st.db, &user, account_id)
+        .await?
+        .require_admin()?;
+    let (ch_id, _db_phone, _cfg) = load_wa_web_inbox(&st.db, account_id, inbox_id).await?;
+    super::whatsapp_web::disconnect_session(&st.db, ch_id, true, true).await;
+    let pending_phone = format!("qr-pending-{}", uuid::Uuid::new_v4().simple());
+    sqlx::query(
+        "UPDATE channel_whatsapp
+         SET phone_number = $1,
+             provider_config = COALESCE(provider_config, '{}'::jsonb) || '{\"connected\":false}'::jsonb,
+             updated_at = now()
+         WHERE id::bigint = $2",
+    )
+    .bind(&pending_phone)
+    .bind(ch_id)
+    .execute(&st.db)
+    .await?;
+    st.hub.invalidate_cache(account_id, "inbox");
+    let snap = super::whatsapp_web::snapshot_for(ch_id).await;
+    Ok(Json(web_status_json(inbox_id, ch_id, &pending_phone, &snap)))
+}
+
+/// POST /whatsapp/web/{inbox_id}/switch_to_cloud
+async fn web_switch_to_cloud(
+    State(st): State<AppState>,
+    user: CurrentUser,
+    Path((account_id, inbox_id)): Path<(i64, i64)>,
+    Json(body): Json<Value>,
+) -> ApiResult {
+    require_account(&st.db, &user, account_id)
+        .await?
+        .require_admin()?;
+    let (ch_id, _db_phone, _cfg) = load_wa_web_inbox(&st.db, account_id, inbox_id).await?;
+
+    let waba_id = body["waba_id"].as_str().unwrap_or("").trim();
+    let phone_number_id = body["phone_number_id"].as_str().unwrap_or("").trim();
+    let access_token = body["access_token"].as_str().unwrap_or("").trim();
+    let app_secret = body["app_secret"].as_str().unwrap_or("").trim();
+
+    let preview = validate_manual_setup(
+        &st.db,
+        waba_id,
+        phone_number_id,
+        access_token,
+        Some(ch_id),
+    )
+    .await?;
+    let phone_number = preview["display_phone_number"].as_str().unwrap_or("");
+    let verify_token = uuid::Uuid::new_v4().simple().to_string();
+    let cfg = json!({
+        "api_key": access_token,
+        "phone_number_id": preview["phone_number_id"],
+        "business_account_id": preview["waba_id"],
+        "app_secret": app_secret,
+        "webhook_verify_token": verify_token,
+        "source": "manual_setup_v2",
+        "upgraded_from": super::whatsapp_web::PROVIDER_WEB,
+    });
+
+    super::whatsapp_web::disconnect_session(&st.db, ch_id, true, true).await;
+
+    sqlx::query(
+        "UPDATE channel_whatsapp
+         SET provider = 'whatsapp_cloud',
+             phone_number = $1,
+             provider_config = $2,
+             updated_at = now()
+         WHERE id::bigint = $3",
+    )
+    .bind(phone_number)
+    .bind(&cfg)
+    .bind(ch_id)
+    .execute(&st.db)
+    .await?;
+    st.hub.invalidate_cache(account_id, "inbox");
+
+    let callback_url = format!(
+        "{}/webhooks/whatsapp/{phone_number}",
+        st.frontend_url.trim_end_matches('/')
+    );
+    let webhook_err = subscribe_webhook_meta(
+        preview["waba_id"].as_str().unwrap_or(waba_id),
+        preview["phone_number_id"]
+            .as_str()
+            .unwrap_or(phone_number_id),
+        access_token,
+        &callback_url,
+        &verify_token,
+    )
+    .await
+    .err()
+    .map(|e| format!("{e:?}"));
+
+    let mut result = crate::inboxes::inbox_json(&st.db, account_id, inbox_id, true).await?;
+    result["switched_from"] = json!(super::whatsapp_web::PROVIDER_WEB);
+    result["webhook_setup"] = json!(webhook_err.is_none());
+    result["webhook_error"] = json!(webhook_err);
+    Ok(Json(result))
 }
 
 #[cfg(test)]

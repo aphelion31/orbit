@@ -45,6 +45,7 @@ function findChrome() {
 const executablePath = findChrome();
 const browser = await chromium.launch({
   headless: true,
+  args: ["--window-size=1280,920"],
   ...(executablePath ? { executablePath } : {}),
 });
 
@@ -263,6 +264,12 @@ async function pulseAndClick(locator, options = {}) {
 // Chapter 1: 1x Unified SSO Login (Orbit Jade #2E9B78)
 await page.goto(`${BASE}/app/login`, { waitUntil: "networkidle" });
 await page.waitForSelector('input[name="email"]');
+await cdp.send("Emulation.setDeviceMetricsOverride", {
+  width: 1280,
+  height: 800,
+  deviceScaleFactor: 1,
+  mobile: false,
+});
 await startRecording();
 await setBanner("1/4", "1x Unified Login · Orbit Jade (#2E9B78)");
 await page.waitForTimeout(600);
@@ -300,37 +307,29 @@ const createdIssue = await createRes.json();
 await page.locator(`a[href="${createdIssue.url}"]`).waitFor({ state: "visible", timeout: 10000 });
 await page.waitForTimeout(900);
 
-// Chapter 3: Live Cross-App Custom Theme Studio
-await page.goto(`${BASE}/app/accounts/1/settings/integrations/orbit`, { waitUntil: "networkidle" });
-await page.locator("#orbit-theme-card").waitFor({ state: "visible", timeout: 10000 });
-await page.locator("#orbit-theme-card").scrollIntoViewIfNeeded();
-await setBanner("3/4", "Custom Theme Studio · Live Across All Components");
-await page.waitForTimeout(600);
-
-await pulseAndClick(page.locator('[data-orbit-theme-preset="cosmic-violet"]'));
-await page.waitForTimeout(750);
-await pulseAndClick(page.locator('[data-orbit-theme-preset="crimson-rose"]'));
-await page.waitForTimeout(750);
-
-const savePromise = page.waitForResponse(
-  (res) => res.url().includes("/api/v1/orbit/theme") && res.request().method() === "PUT"
-);
-await pulseAndClick(page.locator("#orbit-save-theme-btn"));
-const saveRes = await savePromise;
-if (saveRes.status() !== 200) throw new Error(`Save theme failed: ${saveRes.status()}`);
-await page.waitForTimeout(600);
-
-// Chapter 4: 1x SSO Into Saturn Backlog Board + Synced Theme -> Reset Orbit Blue
+// Chapter 3: 1x SSO Into Saturn Backlog Board in Unified Orbit Jade (#2E9B78)
 const saturnBoardUrl = createdIssue.url.replace(/\/issues\/[^/]+\/?$/, "/issues/");
 await page.goto(`${BASE}${saturnBoardUrl}`, { waitUntil: "networkidle" });
 await page.locator(`text=${createdIssue.identifier}`).first().waitFor({ state: "visible", timeout: 15000 });
 await page.locator("#orbit-theme-btn").waitFor({ state: "visible", timeout: 15000 });
-await setBanner("4/4", "1x SSO Into Saturn Backlog · Synced Theme -> Reset Jade");
-await page.waitForTimeout(900);
+await page.waitForSelector("#orbit-theme-override", { state: "attached", timeout: 10000 });
+await page.waitForFunction(() => {
+  const bd = getComputedStyle(document.documentElement).getPropertyValue("--brand-default").trim().toLowerCase();
+  return bd === "#2e9b78" || bd === "rgb(46, 155, 120)";
+});
+await setBanner("3/4", "1x SSO Into Saturn Backlog · Unified Orbit Jade (#2E9B78)");
+await page.waitForTimeout(1300);
 
+// Chapter 4: Live Custom Theme Sync -> Reset to Orbit Jade
+await setBanner("4/4", "Live Custom Theme Sync · Reset to Orbit Jade");
 await page.locator("#orbit-theme-btn").evaluate((el) => el.click());
 await page.locator("#orbit-theme-popover").waitFor({ state: "visible" });
-await page.waitForTimeout(600);
+await page.waitForTimeout(500);
+
+await page.locator('#orbit-theme-popover [data-orbit-preset="orbit-blue"]').evaluate((el) => el.click());
+await page.waitForTimeout(700);
+await page.locator('#orbit-theme-popover [data-orbit-preset="cosmic-violet"]').evaluate((el) => el.click());
+await page.waitForTimeout(700);
 
 const resetPromise = page.waitForResponse(
   (res) => res.url().includes("/api/v1/orbit/theme") && res.request().method() === "PUT"
@@ -338,9 +337,13 @@ const resetPromise = page.waitForResponse(
 await page.locator("#orbit-saturn-reset-btn").evaluate((el) => el.click());
 const resetRes = await resetPromise;
 if (resetRes.status() !== 200) throw new Error(`Reset theme failed: ${resetRes.status()}`);
-await page.waitForTimeout(700);
+await page.waitForFunction(() => {
+  const bd = getComputedStyle(document.documentElement).getPropertyValue("--brand-default").trim().toLowerCase();
+  return bd === "#2e9b78" || bd === "rgb(46, 155, 120)";
+});
+await page.waitForTimeout(650);
 await page.locator("#orbit-theme-btn").evaluate((el) => el.click());
-await page.waitForTimeout(600);
+await page.waitForTimeout(1100);
 
 await stopRecording();
 await context.close();

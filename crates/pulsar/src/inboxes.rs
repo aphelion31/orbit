@@ -797,14 +797,11 @@ pub(crate) async fn inbox_json(
             .fetch_optional(db)
             .await?;
             if let Some(c) = c {
-                obj.insert(
-                    "phone_number".into(),
-                    c.try_get::<Option<String>, _>("phone_number")?.into(),
-                );
-                obj.insert(
-                    "provider".into(),
-                    c.try_get::<Option<String>, _>("provider")?.into(),
-                );
+                let raw_phone = c.try_get::<Option<String>, _>("phone_number")?;
+                let visible_phone = raw_phone.filter(|p| !crate::channels::whatsapp_web::is_pending_phone(p));
+                let provider = c.try_get::<Option<String>, _>("provider")?;
+                obj.insert("phone_number".into(), visible_phone.into());
+                obj.insert("provider".into(), provider.clone().into());
                 let tmpl = c
                     .try_get::<Option<Value>, _>("message_templates")?
                     .filter(|v| v.is_array())
@@ -814,18 +811,25 @@ pub(crate) async fn inbox_json(
                 if admin {
                     obj.insert("provider_config".into(), cfg.clone().into());
                 }
-                let is_embedded = cfg
-                    .as_ref()
-                    .and_then(|v| v["source"].as_str())
-                    .is_some_and(|s| s == "embedded_signup");
-                let has_key = cfg
-                    .as_ref()
-                    .and_then(|v| v["api_key"].as_str())
-                    .is_some_and(|s| !s.is_empty());
-                obj.insert(
-                    "reauthorization_required".into(),
-                    json!(is_embedded && !has_key),
-                );
+                if provider.as_deref() == Some(crate::channels::whatsapp_web::PROVIDER_WEB) {
+                    if let Some(st) = crate::channels::whatsapp_web::status_summary(channel_id) {
+                        obj.insert("wa_web_status".into(), st);
+                    }
+                    obj.insert("reauthorization_required".into(), json!(false));
+                } else {
+                    let is_embedded = cfg
+                        .as_ref()
+                        .and_then(|v| v["source"].as_str())
+                        .is_some_and(|s| s == "embedded_signup");
+                    let has_key = cfg
+                        .as_ref()
+                        .and_then(|v| v["api_key"].as_str())
+                        .is_some_and(|s| !s.is_empty());
+                    obj.insert(
+                        "reauthorization_required".into(),
+                        json!(is_embedded && !has_key),
+                    );
+                }
             }
         }
         "Channel::Telegram" => {
@@ -1326,6 +1330,16 @@ async fn inbox_destroy(
         Some("Channel::WebWidget") => {
             sqlx::query(
                 "DELETE FROM channel_web_widgets WHERE id::bigint = $1 AND account_id::bigint = $2",
+            )
+            .bind(channel_id)
+            .bind(account_id)
+            .execute(&mut *tx)
+            .await?;
+        }
+        Some("Channel::Whatsapp") => {
+            crate::channels::whatsapp_web::disconnect_session(&st.db, channel_id, true, true).await;
+            sqlx::query(
+                "DELETE FROM channel_whatsapp WHERE id::bigint = $1 AND account_id::bigint = $2",
             )
             .bind(channel_id)
             .bind(account_id)
