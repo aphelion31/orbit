@@ -22,7 +22,7 @@ services:
     build:
       context: .
       dockerfile: docker/axum/Dockerfile
-    image: orbit-axum:1.1.0
+    image: orbit-axum:1.2.0
     pull_policy: build
     restart: unless-stopped
     init: true
@@ -71,7 +71,7 @@ services:
     build:
       context: .
       dockerfile: docker/nginx/Dockerfile
-    image: orbit-nginx:1.1.0
+    image: orbit-nginx:1.2.0
     pull_policy: build
     restart: unless-stopped
     init: true
